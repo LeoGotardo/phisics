@@ -1,0 +1,718 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Avaliação de Aptidão Física - KNN</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 15px 35px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #4CAF50, #45a049);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+        }
+
+        .header p {
+            font-size: 1.1rem;
+            opacity: 0.9;
+        }
+
+        .knn-badge {
+            display: inline-block;
+            background: rgba(255,255,255,0.2);
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 0.9rem;
+            margin-top: 10px;
+            font-weight: bold;
+        }
+
+        .content {
+            display: flex;
+            min-height: 700px;
+        }
+
+        .form-section {
+            flex: 1;
+            padding: 30px;
+            border-right: 1px solid #eee;
+        }
+
+        .results-section {
+            flex: 1.2;
+            padding: 30px;
+            background: #f8f9fa;
+        }
+
+        .section-title {
+            font-size: 1.8rem;
+            color: #333;
+            margin-bottom: 25px;
+            border-bottom: 3px solid #4CAF50;
+            padding-bottom: 10px;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-row {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .form-row .form-group {
+            flex: 1;
+            margin-bottom: 0;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #555;
+        }
+
+        input, select {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            font-size: 16px;
+            transition: border-color 0.3s ease;
+        }
+
+        input:focus, select:focus {
+            outline: none;
+            border-color: #4CAF50;
+            box-shadow: 0 0 0 3px rgba(76, 175, 80, 0.1);
+        }
+
+        .category-header {
+            background: #4CAF50;
+            color: white;
+            padding: 15px;
+            margin: 25px -30px 20px -30px;
+            font-size: 1.2rem;
+            font-weight: bold;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .knn-controls {
+            background: #e8f5e8;
+            padding: 20px;
+            border-radius: 10px;
+            margin: 20px 0;
+            border-left: 5px solid #4CAF50;
+        }
+
+        .knn-controls h3 {
+            color: #2e7d32;
+            margin-bottom: 15px;
+            font-size: 1.1rem;
+        }
+
+        .k-input-group {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .k-input {
+            width: 80px !important;
+            text-align: center;
+        }
+
+        .k-btn {
+            background: #4CAF50;
+            color: white;
+            border: none;
+            padding: 10px 15px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 0.9rem;
+        }
+
+        .k-btn:hover {
+            background: #45a049;
+        }
+
+        .submit-btn {
+            background: linear-gradient(135deg, #4CAF50, #45a049);
+            color: white;
+            padding: 15px 30px;
+            border: none;
+            border-radius: 8px;
+            font-size: 1.1rem;
+            font-weight: bold;
+            cursor: pointer;
+            transition: transform 0.2s ease;
+            width: 100%;
+            margin-top: 20px;
+        }
+
+        .submit-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(76, 175, 80, 0.3);
+        }
+
+        .submit-btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .results-container {
+            display: none;
+        }
+
+        .result-card {
+            background: white;
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 3px 10px rgba(0,0,0,0.1);
+            border-left: 5px solid #4CAF50;
+        }
+
+        .result-title {
+            font-size: 1.3rem;
+            color: #333;
+            margin-bottom: 15px;
+            font-weight: bold;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .result-value {
+            font-size: 1.1rem;
+            color: #666;
+            margin-bottom: 10px;
+        }
+
+        .classification {
+            display: inline-block;
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-weight: bold;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            font-size: 0.9rem;
+            margin-bottom: 15px;
+        }
+
+        .classification.excelente { background: #4CAF50; color: white; }
+        .classification.bom { background: #2196F3; color: white; }
+        .classification.regular { background: #FF9800; color: white; }
+        .classification.fraco { background: #F44336; color: white; }
+        .classification.atletico { background: #9C27B0; color: white; }
+        .classification.ativo { background: #4CAF50; color: white; }
+        .classification.moderadamente { background: #FF9800; color: white; }
+        .classification.sedentario { background: #F44336; color: white; }
+
+        .confidence-badge {
+            background: #e3f2fd;
+            color: #1976d2;
+            padding: 4px 8px;
+            border-radius: 12px;
+            font-size: 0.8rem;
+            font-weight: bold;
+        }
+
+        .probabilities {
+            margin-top: 15px;
+            padding: 15px;
+            background: #f5f5f5;
+            border-radius: 8px;
+        }
+
+        .probabilities h4 {
+            color: #333;
+            margin-bottom: 10px;
+            font-size: 1rem;
+        }
+
+        .prob-bar {
+            display: flex;
+            align-items: center;
+            margin-bottom: 8px;
+            font-size: 0.9rem;
+        }
+
+        .prob-label {
+            min-width: 120px;
+            font-weight: 500;
+        }
+
+        .prob-fill {
+            flex: 1;
+            height: 20px;
+            background: #e0e0e0;
+            border-radius: 10px;
+            margin: 0 10px;
+            overflow: hidden;
+        }
+
+        .prob-value {
+            height: 100%;
+            border-radius: 10px;
+            transition: width 0.5s ease;
+        }
+
+        .prob-percentage {
+            min-width: 50px;
+            text-align: right;
+            font-weight: bold;
+        }
+
+        .knn-info {
+            background: #fff3e0;
+            border-left: 5px solid #ff9800;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+
+        .knn-info h4 {
+            color: #e65100;
+            margin-bottom: 10px;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: #666;
+        }
+
+        .spinner {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #4CAF50;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 20px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .error {
+            background: #ffebee;
+            color: #c62828;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 15px 0;
+            border-left: 5px solid #f44336;
+        }
+
+        .dataset-info {
+            background: #e8f5e8;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            font-size: 0.9rem;
+        }
+
+        .dataset-info h4 {
+            color: #2e7d32;
+            margin-bottom: 8px;
+        }
+
+        @media (max-width: 768px) {
+            .content {
+                flex-direction: column;
+            }
+            
+            .form-section {
+                border-right: none;
+                border-bottom: 1px solid #eee;
+            }
+            
+            .form-row {
+                flex-direction: column;
+            }
+            
+            .category-header {
+                margin-left: -20px;
+                margin-right: -20px;
+            }
+
+            .k-input-group {
+                flex-direction: column;
+                align-items: stretch;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🤖 Avaliação de Aptidão Física</h1>
+            <p>Análise inteligente usando algoritmo K-Nearest Neighbors</p>
+            <div class="knn-badge">🧠 Powered by Machine Learning</div>
+        </div>
+
+        <div class="content">
+            <div class="form-section">
+                <h2 class="section-title">Dados dos Testes</h2>
+                
+                <div class="knn-controls">
+                    <h3>⚙️ Configurações do Algoritmo KNN</h3>
+                    <div class="k-input-group">
+                        <label for="k-vizinhos">Número de Vizinhos (K):</label>
+                        <input type="number" id="k-vizinhos" class="k-input" value="5" min="1" max="20">
+                        <button class="k-btn" onclick="ajustarK()">Aplicar</button>
+                    </div>
+                    <p style="font-size: 0.85rem; color: #666; margin-top: 10px;">
+                        K menor = mais sensível a outliers | K maior = classificação mais suave
+                    </p>
+                </div>
+                
+                <form id="fitness-form">
+                    <div class="category-header">Dados Pessoais</div>
+                    
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="idade">Idade (anos):</label>
+                            <input type="number" id="idade" name="idade" required min="10" max="100">
+                        </div>
+                        <div class="form-group">
+                            <label for="sexo">Sexo:</label>
+                            <select id="sexo" name="sexo" required>
+                                <option value="">Selecione...</option>
+                                <option value="masculino">Masculino</option>
+                                <option value="feminino">Feminino</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="category-header">Medidas de Dimensão Corporal</div>
+                    
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="peso">Massa Corporal (kg):</label>
+                            <input type="number" id="peso" name="peso" step="0.1" required min="20" max="200">
+                        </div>
+                        <div class="form-group">
+                            <label for="altura">Estatura (m):</label>
+                            <input type="number" id="altura" name="altura" step="0.01" required min="1.0" max="2.5">
+                        </div>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="envergadura">Envergadura (cm):</label>
+                            <input type="number" id="envergadura" name="envergadura" step="0.1" required min="100" max="300">
+                        </div>
+                        <div class="form-group">
+                            <label for="perimetroCintura">Perímetro da Cintura (cm):</label>
+                            <input type="number" id="perimetroCintura" name="perimetroCintura" step="0.1" required min="40" max="200">
+                        </div>
+                    </div>
+
+                    <div class="category-header">Testes de Aptidão Física</div>
+                    
+                    <div class="form-group">
+                        <label for="distancia6min">Teste de Corrida/Caminhada de 6 minutos (metros):</label>
+                        <input type="number" id="distancia6min" name="distancia6min" step="1" required min="100" max="2000">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="testeSentarAlcancar">Teste de Sentar e Alcançar (cm):</label>
+                        <input type="number" id="testeSentarAlcancar" name="testeSentarAlcancar" step="0.1" required min="-30" max="50">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="abdominais1min">Teste de Abdominais em 1 minuto (repetições):</label>
+                        <input type="number" id="abdominais1min" name="abdominais1min" required min="0" max="100">
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="arremessoMedicineBall">Arremesso de Medicine Ball 2kg (metros):</label>
+                            <input type="number" id="arremessoMedicineBall" name="arremessoMedicineBall" step="0.1" required min="1" max="20">
+                        </div>
+                        <div class="form-group">
+                            <label for="saltoHorizontal">Teste de Salto Horizontal (cm):</label>
+                            <input type="number" id="saltoHorizontal" name="saltoHorizontal" step="1" required min="50" max="400">
+                        </div>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="tempoQuadrado4x4">Teste do Quadrado 4x4m (segundos):</label>
+                            <input type="number" id="tempoQuadrado4x4" name="tempoQuadrado4x4" step="0.1" required min="5" max="30">
+                        </div>
+                        <div class="form-group">
+                            <label for="tempoCorrida20m">Teste de Corrida 20m (segundos):</label>
+                            <input type="number" id="tempoCorrida20m" name="tempoCorrida20m" step="0.1" required min="2" max="10">
+                        </div>
+                    </div>
+
+                    <button type="submit" class="submit-btn">🤖 Analisar com KNN</button>
+                </form>
+            </div>
+
+            <div class="results-section">
+                <h2 class="section-title">Resultados da Análise KNN</h2>
+                
+                <div id="dataset-info" class="dataset-info">
+                    <h4>📊 Informações do Dataset</h4>
+                    <p>Carregando informações do modelo...</p>
+                </div>
+                
+                <div id="no-results" class="loading">
+                    <p>Preencha o formulário e clique em "Analisar com KNN" para ver sua classificação de aptidão física baseada em machine learning.</p>
+                </div>
+
+                <div id="loading" class="loading" style="display: none;">
+                    <div class="spinner"></div>
+                    <p>Analisando com algoritmo KNN...</p>
+                </div>
+
+                <div id="error-message" class="error" style="display: none;"></div>
+
+                <div id="results-container" class="results-container"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Carregar informações do dataset ao inicializar
+        document.addEventListener('DOMContentLoaded', function() {
+            carregarDatasetInfo();
+        });
+
+        async function carregarDatasetInfo() {
+            try {
+                const response = await fetch('/dataset-info');
+                const data = await response.json();
+                
+                if (data.sucesso) {
+                    const infoDiv = document.getElementById('dataset-info');
+                    infoDiv.innerHTML = `
+                        <h4>📊 Informações do Modelo KNN</h4>
+                        <p><strong>Amostras de treino:</strong> ${data.info.tamanho} pessoas</p>
+                        <p><strong>K atual:</strong> ${data.info.kAtual} vizinhos</p>
+                        <p><strong>Distribuição:</strong> ${Object.entries(data.info.distribuicao).map(([classe, count]) => `${classe}: ${count}`).join(' | ')}</p>
+                    `;
+                }
+            } catch (error) {
+                console.error('Erro ao carregar info do dataset:', error);
+            }
+        }
+
+        async function ajustarK() {
+            const kInput = document.getElementById('k-vizinhos');
+            const novoK = parseInt(kInput.value);
+            
+            if (novoK < 1 || novoK > 20) {
+                alert('K deve estar entre 1 e 20');
+                return;
+            }
+            
+            try {
+                const formData = new FormData();
+                formData.append('k', novoK);
+                
+                const response = await fetch('/ajustar-k', {
+                    method: 'POST',
+                    body: formData
+                });
+                
+                const data = await response.json();
+                
+                if (data.sucesso) {
+                    alert(`✅ ${data.mensagem}`);
+                    carregarDatasetInfo(); // Atualizar informações
+                } else {
+                    throw new Error(data.erro);
+                }
+                
+            } catch (error) {
+                alert('❌ Erro ao ajustar K: ' + error.message);
+            }
+        }
+
+        document.getElementById('fitness-form').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const loadingDiv = document.getElementById('loading');
+            const noResultsDiv = document.getElementById('no-results');
+            const errorDiv = document.getElementById('error-message');
+            const resultsContainer = document.getElementById('results-container');
+            const submitBtn = document.querySelector('.submit-btn');
+            
+            // Mostrar loading
+            noResultsDiv.style.display = 'none';
+            errorDiv.style.display = 'none';
+            resultsContainer.style.display = 'none';
+            loadingDiv.style.display = 'block';
+            submitBtn.disabled = true;
+            
+            try {
+                const formData = new FormData(this);
+                const response = await fetch('/analisar', {
+                    method: 'POST',
+                    body: formData
+                });
+                
+                const data = await response.json();
+                
+                if (data.sucesso) {
+                    displayResults(data.resultados);
+                } else {
+                    throw new Error(data.erro || 'Erro desconhecido');
+                }
+                
+            } catch (error) {
+                console.error('Erro:', error);
+                errorDiv.textContent = 'Erro ao processar os dados: ' + error.message;
+                errorDiv.style.display = 'block';
+            } finally {
+                loadingDiv.style.display = 'none';
+                submitBtn.disabled = false;
+            }
+        });
+        
+        function displayResults(resultados) {
+            const container = document.getElementById('results-container');
+            
+            const html = `
+                <div class="knn-info">
+                    <h4>🤖 Informações da Análise KNN</h4>
+                    <p><strong>Algoritmo:</strong> ${resultados.metricas.algoritmo}</p>
+                    <p><strong>K vizinhos:</strong> ${resultados.metricas.kVizinhos} | <strong>Dataset:</strong> ${resultados.metricas.tamanhoDataset} amostras</p>
+                </div>
+                
+                <div class="result-card">
+                    <div class="result-title">📊 Índice de Massa Corporal (IMC)</div>
+                    <div class="result-value">Valor: ${resultados.imc.valor} kg/m²</div>
+                    <span class="classification ${resultados.imc.classificacao.toLowerCase().replace(/ /g, '-')}">${resultados.imc.classificacao}</span>
+                </div>
+                
+                <div class="result-card">
+                    <div class="result-title">📏 Razão Cintura-Estatura (RCE)</div>
+                    <div class="result-value">Valor: ${resultados.rce.valor}</div>
+                    <span class="classification ${resultados.rce.classificacao.toLowerCase().replace(/ /g, '-')}">${resultados.rce.classificacao}</span>
+                </div>
+                
+                <div class="result-card">
+                    <div class="result-title">
+                        ❤️ Aptidão Cardiorrespiratória 
+                        <span class="confidence-badge">${resultados.aptidaoCardiorrespiratoria.confianca}% confiança</span>
+                    </div>
+                    <span class="classification ${resultados.aptidaoCardiorrespiratoria.predicao.toLowerCase()}">${resultados.aptidaoCardiorrespiratoria.predicao}</span>
+                    ${criarBarrasProbabilidade(resultados.aptidaoCardiorrespiratoria.probabilidades)}
+                </div>
+                
+                <div class="result-card">
+                    <div class="result-title">
+                        💪 Aptidão de Força 
+                        <span class="confidence-badge">${resultados.aptidaoForca.confianca}% confiança</span>
+                    </div>
+                    <span class="classification ${resultados.aptidaoForca.predicao.toLowerCase()}">${resultados.aptidaoForca.predicao}</span>
+                    ${criarBarrasProbabilidade(resultados.aptidaoForca.probabilidades)}
+                </div>
+                
+                <div class="result-card">
+                    <div class="result-title">
+                        🤸‍♂️ Flexibilidade 
+                        <span class="confidence-badge">${resultados.flexibilidade.confianca}% confiança</span>
+                    </div>
+                    <span class="classification ${resultados.flexibilidade.predicao.toLowerCase()}">${resultados.flexibilidade.predicao}</span>
+                    ${criarBarrasProbabilidade(resultados.flexibilidade.probabilidades)}
+                </div>
+                
+                <div class="result-card">
+                    <div class="result-title">
+                        ⚡ Agilidade 
+                        <span class="confidence-badge">${resultados.agilidade.confianca}% confiança</span>
+                    </div>
+                    <span class="classification ${resultados.agilidade.predicao.toLowerCase()}">${resultados.agilidade.predicao}</span>
+                    ${criarBarrasProbabilidade(resultados.agilidade.probabilidades)}
+                </div>
+                
+                <div class="result-card" style="border-left-color: #9C27B0; background: linear-gradient(135deg, #f8f9fa, #e8f5e8);">
+                    <div class="result-title">
+                        🏆 Classificação Geral 
+                        <span class="confidence-badge">${resultados.classificacaoGeral.confianca}% confiança</span>
+                    </div>
+                    <span class="classification ${resultados.classificacaoGeral.predicao.toLowerCase().replace(/ /g, '-')}">${resultados.classificacaoGeral.predicao}</span>
+                    ${criarBarrasProbabilidade(resultados.classificacaoGeral.probabilidades)}
+                </div>
+            `;
+            
+            container.innerHTML = html;
+            container.style.display = 'block';
+        }
+        
+        function criarBarrasProbabilidade(probabilidades) {
+            const cores = {
+                'Excelente': '#4CAF50',
+                'Bom': '#2196F3',
+                'Regular': '#FF9800',
+                'Fraco': '#F44336',
+                'Atlético': '#9C27B0',
+                'Ativo': '#4CAF50',
+                'Moderadamente Ativo': '#FF9800',
+                'Sedentário': '#F44336'
+            };
+            
+            let html = '<div class="probabilities"><h4>📈 Probabilidades de Classificação:</h4>';
+            
+            // Ordenar por probabilidade decrescente
+            const probOrdenadas = Object.entries(probabilidades).sort((a, b) => b[1] - a[1]);
+            
+            for (const [classe, prob] of probOrdenadas) {
+                const cor = cores[classe] || '#666';
+                html += `
+                    <div class="prob-bar">
+                        <span class="prob-label">${classe}:</span>
+                        <div class="prob-fill">
+                            <div class="prob-value" style="width: ${prob}%; background: ${cor};"></div>
+                        </div>
+                        <span class="prob-percentage">${prob}%</span>
+                    </div>
+                `;
+            }
+            
+            html += '</div>';
+            return html;
+        }
+    </script>
+</body>
+</html>

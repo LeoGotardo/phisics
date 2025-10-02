@@ -1,0 +1,828 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Talent Scout - Powerlifting</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background: #0a0a0a;
+            color: #e0e0e0;
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        header {
+            background: #111;
+            border-bottom: 1px solid #222;
+            padding: 24px 40px;
+        }
+
+        header h1 {
+            font-size: 1.5em;
+            font-weight: 600;
+            color: #fff;
+            letter-spacing: -0.5px;
+        }
+
+        nav {
+            background: #111;
+            border-bottom: 1px solid #222;
+            display: flex;
+            padding: 0 40px;
+        }
+
+        nav button {
+            padding: 16px 24px;
+            background: transparent;
+            border: none;
+            color: #888;
+            font-size: 0.95em;
+            cursor: pointer;
+            transition: all 0.2s;
+            border-bottom: 2px solid transparent;
+        }
+
+        nav button:hover {
+            color: #e0e0e0;
+        }
+
+        nav button.active {
+            color: #fff;
+            border-bottom-color: #4a9eff;
+        }
+
+        .screen {
+            display: none;
+            padding: 40px;
+        }
+
+        .screen.active {
+            display: block;
+        }
+
+        /* DASHBOARD */
+        .metrics {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 16px;
+            margin-bottom: 40px;
+        }
+
+        .metric-card {
+            background: #111;
+            border: 1px solid #222;
+            border-radius: 8px;
+            padding: 24px;
+        }
+
+        .metric-card .label {
+            font-size: 0.85em;
+            color: #888;
+            margin-bottom: 8px;
+        }
+
+        .metric-card .value {
+            font-size: 2.2em;
+            font-weight: 600;
+            color: #fff;
+        }
+
+        .clusters {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 16px;
+        }
+
+        .cluster {
+            background: #111;
+            border: 1px solid #222;
+            border-radius: 8px;
+            padding: 24px;
+            border-left: 3px solid;
+        }
+
+        .cluster.elite { border-left-color: #4a9eff; }
+        .cluster.competitive { border-left-color: #7c3aed; }
+        .cluster.intermediate { border-left-color: #10b981; }
+        .cluster.beginner { border-left-color: #6b7280; }
+
+        .cluster h3 {
+            font-size: 1.1em;
+            font-weight: 600;
+            margin-bottom: 12px;
+            color: #fff;
+        }
+
+        .cluster .stats {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 16px;
+            margin-top: 16px;
+        }
+
+        .cluster .stat {
+            text-align: center;
+        }
+
+        .cluster .stat .label {
+            font-size: 0.75em;
+            color: #666;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .cluster .stat .value {
+            font-size: 1.3em;
+            font-weight: 600;
+            color: #fff;
+            margin-top: 4px;
+        }
+
+        /* FORM */
+        .form-section {
+            margin-bottom: 32px;
+        }
+
+        .form-section h3 {
+            font-size: 1em;
+            font-weight: 600;
+            color: #fff;
+            margin-bottom: 20px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            font-size: 0.85em;
+        }
+
+        .form-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            font-size: 0.85em;
+            color: #888;
+            margin-bottom: 8px;
+        }
+
+        .form-group input,
+        .form-group select {
+            width: 100%;
+            padding: 12px;
+            background: #111;
+            border: 1px solid #222;
+            border-radius: 6px;
+            color: #e0e0e0;
+            font-size: 0.95em;
+            transition: border-color 0.2s;
+        }
+
+        .form-group input:focus,
+        .form-group select:focus {
+            outline: none;
+            border-color: #4a9eff;
+        }
+
+        .btn {
+            padding: 12px 24px;
+            font-size: 0.9em;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-weight: 500;
+        }
+
+        .btn-primary {
+            background: #4a9eff;
+            color: #fff;
+        }
+
+        .btn-primary:hover {
+            background: #3a8eef;
+        }
+
+        .btn-secondary {
+            background: #222;
+            color: #e0e0e0;
+            margin-left: 12px;
+        }
+
+        .btn-secondary:hover {
+            background: #333;
+        }
+
+        /* ANALYSIS */
+        .filters {
+            display: flex;
+            gap: 12px;
+            margin-bottom: 24px;
+        }
+
+        .filters select {
+            padding: 10px 16px;
+            background: #111;
+            border: 1px solid #222;
+            border-radius: 6px;
+            color: #e0e0e0;
+            font-size: 0.9em;
+        }
+
+        .table-container {
+            background: #111;
+            border: 1px solid #222;
+            border-radius: 8px;
+            overflow: hidden;
+        }
+
+        .table-header {
+            display: grid;
+            grid-template-columns: 60px 2fr repeat(4, 1fr) 100px;
+            gap: 16px;
+            padding: 16px 24px;
+            background: #0a0a0a;
+            font-size: 0.85em;
+            color: #666;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            font-weight: 600;
+        }
+
+        .table-row {
+            display: grid;
+            grid-template-columns: 60px 2fr repeat(4, 1fr) 100px;
+            gap: 16px;
+            padding: 20px 24px;
+            border-top: 1px solid #1a1a1a;
+            align-items: center;
+            transition: background 0.2s;
+        }
+
+        .table-row:hover {
+            background: #0f0f0f;
+        }
+
+        .table-row .rank {
+            font-size: 1.2em;
+            font-weight: 600;
+            color: #4a9eff;
+        }
+
+        .table-row .name {
+            font-weight: 500;
+            color: #fff;
+        }
+
+        .table-row .name .sub {
+            font-size: 0.85em;
+            color: #666;
+            margin-top: 2px;
+        }
+
+        .table-row .metric {
+            text-align: center;
+            font-weight: 500;
+        }
+
+        .badge {
+            display: inline-block;
+            padding: 4px 10px;
+            border-radius: 4px;
+            font-size: 0.8em;
+            font-weight: 600;
+            text-align: center;
+        }
+
+        .badge-elite { background: #4a9eff; color: #000; }
+        .badge-competitive { background: #7c3aed; color: #fff; }
+        .badge-intermediate { background: #10b981; color: #000; }
+
+        /* VISUALIZATION */
+        .viz-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 16px;
+        }
+
+        .chart {
+            background: #111;
+            border: 1px solid #222;
+            border-radius: 8px;
+            padding: 24px;
+        }
+
+        .chart h3 {
+            font-size: 0.95em;
+            font-weight: 600;
+            color: #fff;
+            margin-bottom: 20px;
+        }
+
+        .chart-placeholder {
+            height: 300px;
+            background: #0a0a0a;
+            border: 1px dashed #222;
+            border-radius: 6px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #444;
+            font-size: 0.9em;
+        }
+
+        .actions {
+            margin-top: 32px;
+            display: flex;
+            justify-content: flex-end;
+            gap: 12px;
+        }
+
+        @media (max-width: 1200px) {
+            .metrics { grid-template-columns: repeat(2, 1fr); }
+            .clusters { grid-template-columns: 1fr; }
+            .form-grid { grid-template-columns: repeat(2, 1fr); }
+            .viz-grid { grid-template-columns: 1fr; }
+        }
+
+        @media (max-width: 768px) {
+            .metrics { grid-template-columns: 1fr; }
+            .form-grid { grid-template-columns: 1fr; }
+            .table-header, .table-row { 
+                grid-template-columns: 1fr;
+                text-align: center;
+            }
+            nav { 
+                flex-direction: column;
+                padding: 0;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Talent Scout</h1>
+        </header>
+
+        <nav>
+            <button class="nav-btn active" data-screen="dashboard">Dashboard</button>
+            <button class="nav-btn" data-screen="cadastro">Cadastro</button>
+            <button class="nav-btn" data-screen="analise">Análise</button>
+            <button class="nav-btn" data-screen="visualizacao">Visualização</button>
+        </nav>
+
+        <!-- DASHBOARD -->
+        <div id="dashboard" class="screen active">
+            <div class="metrics">
+                <div class="metric-card">
+                    <div class="label">Total Atletas</div>
+                    <div class="value">156</div>
+                </div>
+                <div class="metric-card">
+                    <div class="label">Elite</div>
+                    <div class="value">12</div>
+                </div>
+                <div class="metric-card">
+                    <div class="label">Competitivo</div>
+                    <div class="value">34</div>
+                </div>
+                <div class="metric-card">
+                    <div class="label">Desenvolvimento</div>
+                    <div class="value">110</div>
+                </div>
+            </div>
+
+            <div class="clusters">
+                <div class="cluster elite">
+                    <h3>Elite</h3>
+                    <p style="color: #888; font-size: 0.9em;">12 atletas • Potencial alto</p>
+                    <div class="stats">
+                        <div class="stat">
+                            <div class="label">Medicine</div>
+                            <div class="value">485</div>
+                        </div>
+                        <div class="stat">
+                            <div class="label">Salto</div>
+                            <div class="value">218</div>
+                        </div>
+                        <div class="stat">
+                            <div class="label">Abdom</div>
+                            <div class="value">52</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="cluster competitive">
+                    <h3>Competitivo</h3>
+                    <p style="color: #888; font-size: 0.9em;">34 atletas • Potencial médio-alto</p>
+                    <div class="stats">
+                        <div class="stat">
+                            <div class="label">Medicine</div>
+                            <div class="value">372</div>
+                        </div>
+                        <div class="stat">
+                            <div class="label">Salto</div>
+                            <div class="value">186</div>
+                        </div>
+                        <div class="stat">
+                            <div class="label">Abdom</div>
+                            <div class="value">41</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="cluster intermediate">
+                    <h3>Intermediário</h3>
+                    <p style="color: #888; font-size: 0.9em;">58 atletas • Desenvolvimento</p>
+                    <div class="stats">
+                        <div class="stat">
+                            <div class="label">Medicine</div>
+                            <div class="value">298</div>
+                        </div>
+                        <div class="stat">
+                            <div class="label">Salto</div>
+                            <div class="value">154</div>
+                        </div>
+                        <div class="stat">
+                            <div class="label">Abdom</div>
+                            <div class="value">33</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="cluster beginner">
+                    <h3>Iniciante</h3>
+                    <p style="color: #888; font-size: 0.9em;">52 atletas • Base</p>
+                    <div class="stats">
+                        <div class="stat">
+                            <div class="label">Medicine</div>
+                            <div class="value">215</div>
+                        </div>
+                        <div class="stat">
+                            <div class="label">Salto</div>
+                            <div class="value">128</div>
+                        </div>
+                        <div class="stat">
+                            <div class="label">Abdom</div>
+                            <div class="value">24</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- CADASTRO -->
+        <div id="cadastro" class="screen">
+            <form id="athleteForm">
+                <div class="form-section">
+                    <h3>Dados Pessoais</h3>
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label>Nome</label>
+                            <input type="text" id="nome" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Data de Nascimento</label>
+                            <input type="date" id="dataNascimento" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Sexo</label>
+                            <select id="sexo" required>
+                                <option value="">Selecione</option>
+                                <option value="M">Masculino</option>
+                                <option value="F">Feminino</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="form-section">
+                    <h3>Antropometria</h3>
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label>Massa Corporal (kg)</label>
+                            <input type="number" id="massaCorporal" step="0.1" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Estatura (cm)</label>
+                            <input type="number" id="estatura" step="0.1" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Envergadura (cm)</label>
+                            <input type="number" id="envergadura" step="0.1">
+                        </div>
+                    </div>
+                </div>
+
+                <div class="form-section">
+                    <h3>Testes de Aptidão</h3>
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label>Medicine Ball (cm)</label>
+                            <input type="number" id="medicineBall" step="0.1" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Salto Horizontal (cm)</label>
+                            <input type="number" id="saltoHorizontal" step="0.1" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Abdominais (rep/min)</label>
+                            <input type="number" id="abdominais" required>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="actions">
+                    <button type="button" class="btn btn-secondary">Limpar</button>
+                    <button type="submit" class="btn btn-primary">Salvar</button>
+                </div>
+            </form>
+        </div>
+
+        <!-- ANÁLISE -->
+        <div id="analise" class="screen">
+            <div class="filters">
+                <select>
+                    <option>Todos os Clusters</option>
+                    <option>Elite</option>
+                    <option>Competitivo</option>
+                    <option>Intermediário</option>
+                </select>
+                <select>
+                    <option>Todas as Idades</option>
+                    <option>10-12 anos</option>
+                    <option>13-15 anos</option>
+                    <option>16-17 anos</option>
+                </select>
+            </div>
+
+            <div class="table-container">
+                <div class="table-header">
+                    <div>#</div>
+                    <div>Nome</div>
+                    <div>Medicine</div>
+                    <div>Salto</div>
+                    <div>Abdom</div>
+                    <div>Score</div>
+                    <div>Cluster</div>
+                </div>
+
+                <div class="table-row">
+                    <div class="rank">1</div>
+                    <div class="name">
+                        João Silva
+                        <div class="sub">16 anos, M</div>
+                    </div>
+                    <div class="metric">512</div>
+                    <div class="metric">228</div>
+                    <div class="metric">56</div>
+                    <div class="metric">296</div>
+                    <div><span class="badge badge-elite">Elite</span></div>
+                </div>
+
+                <div class="table-row">
+                    <div class="rank">2</div>
+                    <div class="name">
+                        Maria Santos
+                        <div class="sub">15 anos, F</div>
+                    </div>
+                    <div class="metric">458</div>
+                    <div class="metric">198</div>
+                    <div class="metric">48</div>
+                    <div class="metric">274</div>
+                    <div><span class="badge badge-elite">Elite</span></div>
+                </div>
+
+                <div class="table-row">
+                    <div class="rank">3</div>
+                    <div class="name">
+                        Pedro Oliveira
+                        <div class="sub">17 anos, M</div>
+                    </div>
+                    <div class="metric">495</div>
+                    <div class="metric">215</div>
+                    <div class="metric">51</div>
+                    <div class="metric">272</div>
+                    <div><span class="badge badge-elite">Elite</span></div>
+                </div>
+
+                <div class="table-row">
+                    <div class="rank">4</div>
+                    <div class="name">
+                        Ana Costa
+                        <div class="sub">14 anos, F</div>
+                    </div>
+                    <div class="metric">412</div>
+                    <div class="metric">192</div>
+                    <div class="metric">45</div>
+                    <div class="metric">255</div>
+                    <div><span class="badge badge-competitive">Competitivo</span></div>
+                </div>
+
+                <div class="table-row">
+                    <div class="rank">5</div>
+                    <div class="name">
+                        Lucas Ferreira
+                        <div class="sub">16 anos, M</div>
+                    </div>
+                    <div class="metric">385</div>
+                    <div class="metric">188</div>
+                    <div class="metric">43</div>
+                    <div class="metric">248</div>
+                    <div><span class="badge badge-competitive">Competitivo</span></div>
+                </div>
+            </div>
+
+            <div class="actions">
+                <button class="btn btn-secondary">Exportar PDF</button>
+                <button class="btn btn-secondary">Exportar Excel</button>
+            </div>
+        </div>
+
+        <!-- VISUALIZAÇÃO -->
+        <div id="visualizacao" class="screen">
+            <div class="viz-grid">
+                <div class="chart">
+                    <h3>Distribuição de Clusters (PCA)</h3>
+                    <div class="chart-placeholder">
+                        <div style="text-align: center;">
+                            <div style="font-size: 1.2em; margin-bottom: 12px; color: #888;">Componentes Principais</div>
+                            <div style="font-size: 0.85em; color: #555; line-height: 1.6;">
+                                PC1: 45.3% variância explicada<br>
+                                PC2: 28.7% variância explicada<br>
+                                Total: 74.0% dos dados
+                            </div>
+                        </div>
+                    </div>
+                    <div style="margin-top: 16px; font-size: 0.85em; color: #666;">
+                        Mostra separação natural entre grupos de atletas baseada em todas as características.
+                    </div>
+                </div>
+
+                <div class="chart">
+                    <h3>Potência: Superior vs Inferior</h3>
+                    <div class="chart-placeholder">
+                        <div style="text-align: center;">
+                            <div style="font-size: 1.2em; margin-bottom: 12px; color: #888;">Correlação</div>
+                            <div style="font-size: 0.85em; color: #555; line-height: 1.6;">
+                                Coeficiente: r = 0.78<br>
+                                p-value &lt; 0.001<br>
+                                Correlação forte positiva
+                            </div>
+                        </div>
+                    </div>
+                    <div style="margin-top: 16px; font-size: 0.85em; color: #666;">
+                        Atletas com alta potência superior tendem a ter alta potência inferior. Indica desenvolvimento equilibrado.
+                    </div>
+                </div>
+
+                <div class="chart">
+                    <h3>Força do Core por Cluster</h3>
+                    <div class="chart-placeholder">
+                        <div style="text-align: center;">
+                            <div style="font-size: 1.2em; margin-bottom: 12px; color: #888;">Abdominais (rep/min)</div>
+                            <div style="font-size: 0.85em; color: #555; line-height: 1.6;">
+                                Elite: 52 ± 4.2<br>
+                                Competitivo: 41 ± 3.8<br>
+                                Intermediário: 33 ± 4.1<br>
+                                Iniciante: 24 ± 3.5
+                            </div>
+                        </div>
+                    </div>
+                    <div style="margin-top: 16px; font-size: 0.85em; color: #666;">
+                        Diferença significativa entre clusters (ANOVA p &lt; 0.001). Core forte distingue atletas de elite.
+                    </div>
+                </div>
+
+                <div class="chart">
+                    <h3>Perfil Médio por Cluster</h3>
+                    <div class="chart-placeholder">
+                        <div style="text-align: center;">
+                            <div style="font-size: 1.2em; margin-bottom: 12px; color: #888;">Scores Normalizados (0-100)</div>
+                            <div style="font-size: 0.85em; color: #555; line-height: 1.6;">
+                                Elite: 85-92 em todas dimensões<br>
+                                Competitivo: 65-75<br>
+                                Intermediário: 45-58<br>
+                                Iniciante: 22-35
+                            </div>
+                        </div>
+                    </div>
+                    <div style="margin-top: 16px; font-size: 0.85em; color: #666;">
+                        Atletas elite apresentam desenvolvimento homogêneo. Iniciantes têm desenvolvimento desigual.
+                    </div>
+                </div>
+            </div>
+
+            <div style="background: #111; border: 1px solid #222; border-radius: 8px; padding: 24px; margin-top: 24px;">
+                <h3 style="font-size: 1em; color: #fff; margin-bottom: 16px;">Indicadores de Qualidade do Clustering</h3>
+                <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 24px;">
+                    <div>
+                        <div style="font-size: 0.85em; color: #666; margin-bottom: 4px;">Silhouette Score</div>
+                        <div style="font-size: 1.5em; font-weight: 600; color: #4a9eff;">0.67</div>
+                        <div style="font-size: 0.8em; color: #666; margin-top: 4px;">Boa separação entre clusters</div>
+                    </div>
+                    <div>
+                        <div style="font-size: 0.85em; color: #666; margin-bottom: 4px;">Davies-Bouldin Index</div>
+                        <div style="font-size: 1.5em; font-weight: 600; color: #10b981;">0.82</div>
+                        <div style="font-size: 0.8em; color: #666; margin-top: 4px;">Clusters bem definidos</div>
+                    </div>
+                    <div>
+                        <div style="font-size: 0.85em; color: #666; margin-bottom: 4px;">Inércia Total</div>
+                        <div style="font-size: 1.5em; font-weight: 600; color: #7c3aed;">1,247</div>
+                        <div style="font-size: 0.8em; color: #666; margin-top: 4px;">Compactação adequada</div>
+                    </div>
+                </div>
+            </div>
+
+            <div style="background: #111; border: 1px solid #222; border-radius: 8px; padding: 24px; margin-top: 16px;">
+                <h3 style="font-size: 1em; color: #fff; margin-bottom: 16px;">Insights Estatísticos</h3>
+                <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 16px; font-size: 0.9em; color: #aaa; line-height: 1.8;">
+                    <div>
+                        <strong style="color: #fff;">Preditores mais importantes:</strong><br>
+                        1. Medicine Ball (35% do peso)<br>
+                        2. Salto Horizontal (35%)<br>
+                        3. Abdominais (25%)
+                    </div>
+                    <div>
+                        <strong style="color: #fff;">Taxas de transição:</strong><br>
+                        Iniciante → Intermediário: 6-12 meses<br>
+                        Intermediário → Competitivo: 12-24 meses<br>
+                        Competitivo → Elite: 24-36 meses
+                    </div>
+                    <div>
+                        <strong style="color: #fff;">Zona de risco à saúde:</strong><br>
+                        IMC &gt; 25.0: 8 atletas (5.1%)<br>
+                        RCE &gt; 0.50: 12 atletas (7.7%)<br>
+                        Requer acompanhamento nutricional
+                    </div>
+                    <div>
+                        <strong style="color: #fff;">Recomendações gerais:</strong><br>
+                        Elite: manutenção + especialização<br>
+                        Competitivo: força máxima + técnica<br>
+                        Intermediário/Iniciante: base + volume
+                    </div>
+                </div>
+            </div>
+
+            <div class="actions">
+                <button class="btn btn-primary">Gerar Relatório Completo</button>
+                <button class="btn btn-secondary">Exportar Dados</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const navButtons = document.querySelectorAll('.nav-btn');
+        const screens = document.querySelectorAll('.screen');
+
+        navButtons.forEach(button => {
+            button.addEventListener('click', () => {
+                const targetScreen = button.dataset.screen;
+                
+                navButtons.forEach(btn => btn.classList.remove('active'));
+                screens.forEach(screen => screen.classList.remove('active'));
+                
+                button.classList.add('active');
+                document.getElementById(targetScreen).classList.add('active');
+            });
+        });
+
+        const athleteForm = document.getElementById('athleteForm');
+        
+        athleteForm.addEventListener('submit', (e) => {
+            e.preventDefault();
+            
+            const data = {
+                nome: document.getElementById('nome').value,
+                medicineBall: parseFloat(document.getElementById('medicineBall').value),
+                saltoHorizontal: parseFloat(document.getElementById('saltoHorizontal').value),
+                abdominais: parseInt(document.getElementById('abdominais').value)
+            };
+
+            const score = (data.medicineBall * 0.35 + data.saltoHorizontal * 0.35 + data.abdominais * 0.30).toFixed(1);
+            
+            let cluster = score >= 250 ? 'Elite' : score >= 200 ? 'Competitivo' : score >= 150 ? 'Intermediário' : 'Iniciante';
+
+            alert(`Atleta: ${data.nome}\nScore: ${score}\nCluster: ${cluster}`);
+            athleteForm.reset();
+        });
+
+        document.querySelector('.btn-secondary').addEventListener('click', () => {
+            athleteForm.reset();
+        });
+    </script>
+</body>
+</html>

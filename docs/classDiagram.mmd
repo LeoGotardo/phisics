@@ -1,0 +1,57 @@
+classDiagram
+    class AtletaController {
+        -model: PowerliftingTalentScout
+        +cadastrarAtleta(dados: dict) dict
+        +listarAtletas(filtros: dict) list
+        +buscarAtleta(id: int) dict
+        +atualizarAtleta(id: int, dados: dict) bool
+        +deletarAtleta(id: int) bool
+    }
+
+    class AnaliseController {
+        -model: PowerliftingTalentScout
+        +gerarClusters() dict
+        +obterRanking(top_n: int) list
+        +obterEstatisticas() dict
+        +classificarAtleta(dados: dict) dict
+    }
+
+    class VisualizacaoController {
+        -model: PowerliftingTalentScout
+        +obterDadosPCA() dict
+        +obterCorrelacoes() dict
+        +obterDistribuicaoClusters() dict
+        +obterMetricasQualidade() dict
+    }
+
+    class DashboardController {
+        -model: PowerliftingTalentScout
+        +obterResumo() dict
+        +obterMetricasGerais() dict
+        +obterDistribuicaoClusters() list
+    }
+
+    class PowerliftingTalentScout {
+        -n_clusters: int
+        -scaler: StandardScaler
+        -kmeans: KMeans
+        -pca: PCA
+        +treinar_modelo(df: DataFrame) DataFrame
+        +calcular_imc(df: DataFrame) DataFrame
+        +calcular_razao_cintura_estatura(df: DataFrame) DataFrame
+        +selecionar_features_powerlifting(df: DataFrame) tuple
+        +analisar_clusters(df: DataFrame) DataFrame
+        +identificar_top_atletas(df: DataFrame, top_n: int) DataFrame
+        +classificar_potencial_cluster(df: DataFrame) str
+    }
+
+    AtletaController --> PowerliftingTalentScout
+    AnaliseController --> PowerliftingTalentScout
+    VisualizacaoController --> PowerliftingTalentScout
+    DashboardController --> PowerliftingTalentScout
+
+    note for AtletaController "Gerencia CRUD de atletas"
+    note for AnaliseController "Processa clustering e rankings"
+    note for VisualizacaoController "Fornece dados para gráficos"
+    note for DashboardController "Agrega dados para visão geral"
+    note for PowerliftingTalentScout "Modelo principal (Machine Learning)"
