@@ -1,0 +1,111 @@
+{% extends "base.html" %}
+
+{% block content %}
+{% super() %}
+<!-- ANÁLISE -->
+<div id="analise" class="screen">
+    <div class="filters">
+        <select>
+            <option>Todos os Clusters</option>
+            <option>Elite</option>
+            <option>Competitivo</option>
+            <option>Intermediário</option>
+        </select>
+        <select>
+            <option>Todas as Idades</option>
+            <option>10-18 anos</option>
+            <option>19-29 anos</option>
+            <option>30+ anos</option>
+        </select>
+    </div>
+
+    <div class="table-container">
+        <div class="table-header">
+            <div>#</div>
+            <div>Nome</div>
+            <div>Altura</div>
+            <div>Medicine</div>
+            <div>Salto</div>
+            <div>Abdom</div>
+            <div>Score</div>
+            <div>Cluster</div>
+        </div>
+
+        <div class="table-row">
+            <div class="rank">1</div>
+            <div class="name">
+                João Silva
+                <div class="sub">28 anos, M</div>
+            </div>
+            
+            <div class="metric">180</div>
+            <div class="metric">228</div>
+            <div class="metric">56</div>
+            <div class="metric">296</div>
+            <div class="metric">95</div>
+            <div><span class="badge badge-elite">Elite</span></div>
+        </div>
+
+        <div class="table-row">
+            <div class="rank">2</div>
+            <div class="name">
+                Maria Santos
+                <div class="sub">19 anos, F</div>
+            </div>
+            <div class="metric">178</div>
+            <div class="metric">198</div>
+            <div class="metric">48</div>
+            <div class="metric">274</div>
+            <div class="metric">88</div>
+            <div><span class="badge badge-elite">Elite</span></div>
+        </div>
+
+        <div class="table-row">
+            <div class="rank">3</div>
+            <div class="name">
+                Pedro Oliveira
+                <div class="sub">21 anos, M</div>
+            </div>
+            <div class="metric">187</div>
+            <div class="metric">215</div>
+            <div class="metric">51</div>
+            <div class="metric">272</div>
+            <div class="metric">82</div>
+            <div><span class="badge badge-elite">Elite</span></div>
+        </div>
+
+        <div class="table-row">
+            <div class="rank">4</div>
+            <div class="name">
+                Ana Costa
+                <div class="sub">23 anos, F</div>
+            </div>
+            <div class="metric">176</div>
+            <div class="metric">192</div>
+            <div class="metric">45</div>
+            <div class="metric">255</div>
+            <div class="metric">73</div>
+            <div><span class="badge badge-competitive">Competitivo</span></div>
+        </div>
+
+        <div class="table-row">
+            <div class="rank">5</div>
+            <div class="name">
+                Lucas Ferreira
+                <div class="sub">20 anos, M</div>
+            </div>
+            <div class="metric">188</div>
+            <div class="metric">188</div>
+            <div class="metric">43</div>
+            <div class="metric">248</div>
+            <div class="metric">68</div>
+            <div><span class="badge badge-competitive">Competitivo</span></div>
+        </div>
+    </div>
+
+    <div class="actions">
+        <button class="btn btn-secondary">Exportar PDF</button>
+        <button class="btn btn-secondary">Exportar Excel</button>
+    </div>
+</div>
+{% endblock %}

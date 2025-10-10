@@ -1,0 +1,135 @@
+{% extends "base.html" %}
+
+{% block content %}
+{% super() %}
+<!-- VISUALIZAÇÃO -->
+<div id="visualizacao" class="screen">
+    <div class="viz-grid">
+        <div class="chart">
+            <h3>Distribuição de Clusters (PCA)</h3>
+            <div class="chart-placeholder">
+                <div style="text-align: center;">
+                    <div style="font-size: 1.2em; margin-bottom: 12px; color: #888;">Componentes Principais</div>
+                    <div style="font-size: 0.85em; color: #555; line-height: 1.6;">
+                        PC1: 45.3% variância explicada<br>
+                        PC2: 28.7% variância explicada<br>
+                        Total: 74.0% dos dados
+                    </div>
+                </div>
+            </div>
+            <div style="margin-top: 16px; font-size: 0.85em; color: #666;">
+                Mostra separação natural entre grupos de atletas baseada em todas as características.
+            </div>
+        </div>
+
+        <div class="chart">
+            <h3>Potência: Superior vs Inferior</h3>
+            <div class="chart-placeholder">
+                <div style="text-align: center;">
+                    <div style="font-size: 1.2em; margin-bottom: 12px; color: #888;">Correlação</div>
+                    <div style="font-size: 0.85em; color: #555; line-height: 1.6;">
+                        Coeficiente: r = 0.78<br>
+                        p-value &lt; 0.001<br>
+                        Correlação forte positiva
+                    </div>
+                </div>
+            </div>
+            <div style="margin-top: 16px; font-size: 0.85em; color: #666;">
+                Atletas com alta potência superior tendem a ter alta potência inferior. Indica desenvolvimento equilibrado.
+            </div>
+        </div>
+
+        <div class="chart">
+            <h3>Força do Core por Cluster</h3>
+            <div class="chart-placeholder">
+                <div style="text-align: center;">
+                    <div style="font-size: 1.2em; margin-bottom: 12px; color: #888;">Abdominais (rep/min)</div>
+                    <div style="font-size: 0.85em; color: #555; line-height: 1.6;">
+                        Elite: 52 ± 4.2<br>
+                        Competitivo: 41 ± 3.8<br>
+                        Intermediário: 33 ± 4.1<br>
+                        Iniciante: 24 ± 3.5
+                    </div>
+                </div>
+            </div>
+            <div style="margin-top: 16px; font-size: 0.85em; color: #666;">
+                Diferença significativa entre clusters (ANOVA p &lt; 0.001). Core forte distingue atletas de elite.
+            </div>
+        </div>
+
+        <div class="chart">
+            <h3>Perfil Médio por Cluster</h3>
+            <div class="chart-placeholder">
+                <div style="text-align: center;">
+                    <div style="font-size: 1.2em; margin-bottom: 12px; color: #888;">Scores Normalizados (0-100)</div>
+                    <div style="font-size: 0.85em; color: #555; line-height: 1.6;">
+                        Elite: 85-92 em todas dimensões<br>
+                        Competitivo: 65-75<br>
+                        Intermediário: 45-58<br>
+                        Iniciante: 22-35
+                    </div>
+                </div>
+            </div>
+            <div style="margin-top: 16px; font-size: 0.85em; color: #666;">
+                Atletas elite apresentam desenvolvimento homogêneo. Iniciantes têm desenvolvimento desigual.
+            </div>
+        </div>
+    </div>
+
+    <div style="background: #111; border: 1px solid #222; border-radius: 8px; padding: 24px; margin-top: 24px;">
+        <h3 style="font-size: 1em; color: #fff; margin-bottom: 16px;">Indicadores de Qualidade do Clustering</h3>
+        <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 24px;">
+            <div>
+                <div style="font-size: 0.85em; color: #666; margin-bottom: 4px;">Silhouette Score</div>
+                <div style="font-size: 1.5em; font-weight: 600; color: #4a9eff;">0.67</div>
+                <div style="font-size: 0.8em; color: #666; margin-top: 4px;">Boa separação entre clusters</div>
+            </div>
+            <div>
+                <div style="font-size: 0.85em; color: #666; margin-bottom: 4px;">Davies-Bouldin Index</div>
+                <div style="font-size: 1.5em; font-weight: 600; color: #10b981;">0.82</div>
+                <div style="font-size: 0.8em; color: #666; margin-top: 4px;">Clusters bem definidos</div>
+            </div>
+            <div>
+                <div style="font-size: 0.85em; color: #666; margin-bottom: 4px;">Inércia Total</div>
+                <div style="font-size: 1.5em; font-weight: 600; color: #7c3aed;">1,247</div>
+                <div style="font-size: 0.8em; color: #666; margin-top: 4px;">Compactação adequada</div>
+            </div>
+        </div>
+    </div>
+
+    <div style="background: #111; border: 1px solid #222; border-radius: 8px; padding: 24px; margin-top: 16px;">
+        <h3 style="font-size: 1em; color: #fff; margin-bottom: 16px;">Insights Estatísticos</h3>
+        <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 16px; font-size: 0.9em; color: #aaa; line-height: 1.8;">
+            <div>
+                <strong style="color: #fff;">Preditores mais importantes:</strong><br>
+                1. Medicine Ball (35% do peso)<br>
+                2. Salto Horizontal (35%)<br>
+                3. Abdominais (25%)
+            </div>
+            <div>
+                <strong style="color: #fff;">Taxas de transição:</strong><br>
+                Iniciante → Intermediário: 6-12 meses<br>
+                Intermediário → Competitivo: 12-24 meses<br>
+                Competitivo → Elite: 24-36 meses
+            </div>
+            <div>
+                <strong style="color: #fff;">Zona de risco à saúde:</strong><br>
+                IMC &gt; 25.0: 8 atletas (5.1%)<br>
+                RCE &gt; 0.50: 12 atletas (7.7%)<br>
+                Requer acompanhamento nutricional
+            </div>
+            <div>
+                <strong style="color: #fff;">Recomendações gerais:</strong><br>
+                Elite: manutenção + especialização<br>
+                Competitivo: força máxima + técnica<br>
+                Intermediário/Iniciante: base + volume
+            </div>
+        </div>
+    </div>
+
+    <div class="actions">
+        <button class="btn btn-primary">Gerar Relatório Completo</button>
+        <button class="btn btn-secondary">Exportar Dados</button>
+    </div>
+</div>
+{% endblock %}

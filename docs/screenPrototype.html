@@ -75,7 +75,7 @@
         /* DASHBOARD */
         .metrics {
             display: grid;
-            grid-template-columns: repeat(4, 1fr);
+            grid-template-columns: repeat(5, 1fr);
             gap: 16px;
             margin-bottom: 40px;
         }
@@ -127,7 +127,7 @@
 
         .cluster .stats {
             display: grid;
-            grid-template-columns: repeat(3, 1fr);
+            grid-template-columns: repeat(4, 1fr);
             gap: 16px;
             margin-top: 16px;
         }
@@ -250,7 +250,7 @@
 
         .table-header {
             display: grid;
-            grid-template-columns: 60px 2fr repeat(4, 1fr) 100px;
+            grid-template-columns: 60px 2fr repeat(5, 1fr) 100px;
             gap: 16px;
             padding: 16px 24px;
             background: #0a0a0a;
@@ -263,7 +263,7 @@
 
         .table-row {
             display: grid;
-            grid-template-columns: 60px 2fr repeat(4, 1fr) 100px;
+            grid-template-columns: 60px 2fr repeat(5, 1fr) 100px;
             gap: 16px;
             padding: 20px 24px;
             border-top: 1px solid #1a1a1a;
@@ -411,6 +411,10 @@
                     <p style="color: #888; font-size: 0.9em;">12 atletas • Potencial alto</p>
                     <div class="stats">
                         <div class="stat">
+                            <div class="label">Altura</div>
+                            <div class="value">192</div>
+                        </div>
+                        <div class="stat">
                             <div class="label">Medicine</div>
                             <div class="value">485</div>
                         </div>
@@ -430,6 +434,10 @@
                     <p style="color: #888; font-size: 0.9em;">34 atletas • Potencial médio-alto</p>
                     <div class="stats">
                         <div class="stat">
+                            <div class="label">Altura</div>
+                            <div class="value">187</div>
+                        </div>
+                        <div class="stat">
                             <div class="label">Medicine</div>
                             <div class="value">372</div>
                         </div>
@@ -447,7 +455,10 @@
                 <div class="cluster intermediate">
                     <h3>Intermediário</h3>
                     <p style="color: #888; font-size: 0.9em;">58 atletas • Desenvolvimento</p>
-                    <div class="stats">
+                        <div class="stats">                        <div class="stat">
+                            <div class="label">Altura</div>
+                            <div class="value">183</div>
+                        </div>
                         <div class="stat">
                             <div class="label">Medicine</div>
                             <div class="value">298</div>
@@ -467,6 +478,10 @@
                     <h3>Iniciante</h3>
                     <p style="color: #888; font-size: 0.9em;">52 atletas • Base</p>
                     <div class="stats">
+                        <div class="stat">
+                            <div class="label">Altura</div>
+                            <div class="value">180</div>
+                        </div>
                         <div class="stat">
                             <div class="label">Medicine</div>
                             <div class="value">215</div>
@@ -563,9 +578,9 @@
                 </select>
                 <select>
                     <option>Todas as Idades</option>
-                    <option>10-12 anos</option>
-                    <option>13-15 anos</option>
-                    <option>16-17 anos</option>
+                    <option>10-18 anos</option>
+                    <option>19-29 anos</option>
+                    <option>30+ anos</option>
                 </select>
             </div>
 
@@ -573,6 +588,7 @@
                 <div class="table-header">
                     <div>#</div>
                     <div>Nome</div>
+                    <div>Altura</div>
                     <div>Medicine</div>
                     <div>Salto</div>
                     <div>Abdom</div>
@@ -584,12 +600,14 @@
                     <div class="rank">1</div>
                     <div class="name">
                         João Silva
-                        <div class="sub">16 anos, M</div>
+                        <div class="sub">28 anos, M</div>
                     </div>
-                    <div class="metric">512</div>
+                    
+                    <div class="metric">180</div>
                     <div class="metric">228</div>
                     <div class="metric">56</div>
                     <div class="metric">296</div>
+                    <div class="metric">95</div>
                     <div><span class="badge badge-elite">Elite</span></div>
                 </div>
 
@@ -597,12 +615,13 @@
                     <div class="rank">2</div>
                     <div class="name">
                         Maria Santos
-                        <div class="sub">15 anos, F</div>
+                        <div class="sub">19 anos, F</div>
                     </div>
-                    <div class="metric">458</div>
+                    <div class="metric">178</div>
                     <div class="metric">198</div>
                     <div class="metric">48</div>
                     <div class="metric">274</div>
+                    <div class="metric">88</div>
                     <div><span class="badge badge-elite">Elite</span></div>
                 </div>
 
@@ -610,12 +629,13 @@
                     <div class="rank">3</div>
                     <div class="name">
                         Pedro Oliveira
-                        <div class="sub">17 anos, M</div>
+                        <div class="sub">21 anos, M</div>
                     </div>
-                    <div class="metric">495</div>
+                    <div class="metric">187</div>
                     <div class="metric">215</div>
                     <div class="metric">51</div>
                     <div class="metric">272</div>
+                    <div class="metric">82</div>
                     <div><span class="badge badge-elite">Elite</span></div>
                 </div>
 
@@ -623,12 +643,13 @@
                     <div class="rank">4</div>
                     <div class="name">
                         Ana Costa
-                        <div class="sub">14 anos, F</div>
+                        <div class="sub">23 anos, F</div>
                     </div>
-                    <div class="metric">412</div>
+                    <div class="metric">176</div>
                     <div class="metric">192</div>
                     <div class="metric">45</div>
                     <div class="metric">255</div>
+                    <div class="metric">73</div>
                     <div><span class="badge badge-competitive">Competitivo</span></div>
                 </div>
 
@@ -636,12 +657,13 @@
                     <div class="rank">5</div>
                     <div class="name">
                         Lucas Ferreira
-                        <div class="sub">16 anos, M</div>
+                        <div class="sub">20 anos, M</div>
                     </div>
-                    <div class="metric">385</div>
+                    <div class="metric">188</div>
                     <div class="metric">188</div>
                     <div class="metric">43</div>
                     <div class="metric">248</div>
+                    <div class="metric">68</div>
                     <div><span class="badge badge-competitive">Competitivo</span></div>
                 </div>
             </div>
