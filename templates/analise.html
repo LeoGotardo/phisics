@@ -6,16 +6,17 @@
 <div id="analise" class="screen">
     <div class="filters">
         <select>
-            <option>Todos os Clusters</option>
-            <option>Elite</option>
-            <option>Competitivo</option>
-            <option>Intermediário</option>
+            <option value="all">Todos os Clusters</option>
+            <option value="elite">Elite</option>
+            <option value="competitive">Competitivo</option>
+            <option value="intermediate">Intermediario</option>
+            <option value="intermediate">Iniciante</option>
         </select>
         <select>
-            <option>Todas as Idades</option>
-            <option>10-18 anos</option>
-            <option>19-29 anos</option>
-            <option>30+ anos</option>
+            <option value="all">Todas as Idades</option>
+            <option value="'10-18'">10-18 anos</option>
+            <option value="'19-29'">19-29 anos</option>
+            <option value="'30+'">30+ anos</option>
         </select>
     </div>
 
@@ -24,88 +25,74 @@
             <div>#</div>
             <div>Nome</div>
             <div>Altura</div>
-            <div>Medicine</div>
+            <div>Envergadura</div>
+            <div>Arremesso</div>
             <div>Salto</div>
             <div>Abdom</div>
             <div>Score</div>
             <div>Cluster</div>
         </div>
 
+        {% for athlete in athletes %}
         <div class="table-row">
             <div class="rank">1</div>
             <div class="name">
-                João Silva
-                <div class="sub">28 anos, M</div>
+                {{ athlete.nome }}
+                <div class="sub">{{ athlete.data_nascimento.year }} anos, {{ athlete.sexo }}</div>
             </div>
             
-            <div class="metric">180</div>
-            <div class="metric">228</div>
-            <div class="metric">56</div>
-            <div class="metric">296</div>
-            <div class="metric">95</div>
-            <div><span class="badge badge-elite">Elite</span></div>
+            <div class="metric">{{ athlete.estatura }}</div>
+            <div class="metric">{{ athlete.envergadura }}</div>
+            <div class="metric">{{ athlete.arremesso }}</div>
+            <div class="metric">{{ athlete.salto_horizontal }}</div>
+            <div class="metric">{{ athlete.abdominais }}</div>
+            <div><span class="badge badge-{{ athlete.nivel_desempenho.lower() }}">{{ athlete.nivel_desempenho }}</span></div>
         </div>
-
-        <div class="table-row">
-            <div class="rank">2</div>
-            <div class="name">
-                Maria Santos
-                <div class="sub">19 anos, F</div>
-            </div>
-            <div class="metric">178</div>
-            <div class="metric">198</div>
-            <div class="metric">48</div>
-            <div class="metric">274</div>
-            <div class="metric">88</div>
-            <div><span class="badge badge-elite">Elite</span></div>
-        </div>
-
-        <div class="table-row">
-            <div class="rank">3</div>
-            <div class="name">
-                Pedro Oliveira
-                <div class="sub">21 anos, M</div>
-            </div>
-            <div class="metric">187</div>
-            <div class="metric">215</div>
-            <div class="metric">51</div>
-            <div class="metric">272</div>
-            <div class="metric">82</div>
-            <div><span class="badge badge-elite">Elite</span></div>
-        </div>
-
-        <div class="table-row">
-            <div class="rank">4</div>
-            <div class="name">
-                Ana Costa
-                <div class="sub">23 anos, F</div>
-            </div>
-            <div class="metric">176</div>
-            <div class="metric">192</div>
-            <div class="metric">45</div>
-            <div class="metric">255</div>
-            <div class="metric">73</div>
-            <div><span class="badge badge-competitive">Competitivo</span></div>
-        </div>
-
-        <div class="table-row">
-            <div class="rank">5</div>
-            <div class="name">
-                Lucas Ferreira
-                <div class="sub">20 anos, M</div>
-            </div>
-            <div class="metric">188</div>
-            <div class="metric">188</div>
-            <div class="metric">43</div>
-            <div class="metric">248</div>
-            <div class="metric">68</div>
-            <div><span class="badge badge-competitive">Competitivo</span></div>
-        </div>
+        {% endfor %}
     </div>
 
     <div class="actions">
-        <button class="btn btn-secondary">Exportar PDF</button>
-        <button class="btn btn-secondary">Exportar Excel</button>
+        <button class="btn btn-secondary" onclick="exportPDF()">Exportar PDF</button>
+        <button class="btn btn-secondary" onclick="exportExcel()">Exportar Excel</button>
     </div>
 </div>
+{% endblock %}
+
+{% block scripts %}
+{% super() %}
+<script>
+    function exportPDF() {
+        const data = {
+            athletes: {{ athletes | tojson | safe }},
+            filters: {
+                query: {{ request.args.get('query') | tojson | safe }},
+                sort: {{ request.args.get('sort') | tojson | safe }},
+                sortOrder: {{ request.args.get('sortOrder') | tojson | safe }}
+            }
+        };
+
+        const pdf = document.getElementById('pdf');
+        pdf.src = `/static/pdf/analise.pdf?${new URLSearchParams(data).toString()}`;
+    }
+
+    function exportExcel() {
+        const data = {
+            athletes: {{ athletes | tojson | safe }},
+            filters: {
+                query: {{ request.args.get('query') | tojson | safe }},
+                sort: {{ request.args.get('sort') | tojson | safe }},
+                sortOrder: {{ request.args.get('sortOrder') | tojson | safe }}
+            }
+        };
+
+        const blob = new Blob([JSON.stringify(data)], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = 'analise.json';
+        link.click();
+    }
+    
+</script>
 {% endblock %}

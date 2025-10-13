@@ -1,73 +1,238 @@
-{% extends "base.html" %}
-
-{% block content %}
-{% super() %}
+{% extends "base.html" %} {% block content %} {% super() %}
 
 <!-- CADASTRO -->
 <div id="cadastro" class="screen">
-    <form id="athleteForm">
-        <div class="form-section">
-            <h3>Dados Pessoais</h3>
-            <div class="form-grid">
-                <div class="form-group">
-                    <label>Nome</label>
-                    <input type="text" id="nome" required>
-                </div>
-                <div class="form-group">
-                    <label>Data de Nascimento</label>
-                    <input type="date" id="dataNascimento" required>
-                </div>
-                <div class="form-group">
-                    <label>Sexo</label>
-                    <select id="sexo" required>
-                        <option value="">Selecione</option>
-                        <option value="M">Masculino</option>
-                        <option value="F">Feminino</option>
-                    </select>
-                </div>
-            </div>
+  <form id="athleteForm" method="post">
+    <div class="form-section">
+      <h3>Dados Pessoais</h3>
+      <div class="form-grid">
+        <div class="form-group">
+          <label>Nome</label>
+          <input type="text" id="nome" required />
         </div>
+        <div class="form-group">
+          <label>Data de Nascimento</label>
+          <input type="date" id="dataNascimento" required />
+        </div>
+        <div class="form-group">
+          <label>Sexo</label>
+          <select id="sexo" required>
+            <option value="">Selecione</option>
+            <option value="M">Masculino</option>
+            <option value="F">Feminino</option>
+          </select>
+        </div>
+      </div>
+    </div>
 
-        <div class="form-section">
-            <h3>Antropometria</h3>
-            <div class="form-grid">
-                <div class="form-group">
-                    <label>Massa Corporal (kg)</label>
-                    <input type="number" id="massaCorporal" step="0.1" required>
-                </div>
-                <div class="form-group">
-                    <label>Estatura (cm)</label>
-                    <input type="number" id="estatura" step="0.1" required>
-                </div>
-                <div class="form-group">
-                    <label>Envergadura (cm)</label>
-                    <input type="number" id="envergadura" step="0.1">
-                </div>
-            </div>
-        </div>
+    <div class="fileDialog"></div>
 
-        <div class="form-section">
-            <h3>Testes de Aptidão</h3>
-            <div class="form-grid">
-                <div class="form-group">
-                    <label>Medicine Ball (cm)</label>
-                    <input type="number" id="medicineBall" step="0.1" required>
-                </div>
-                <div class="form-group">
-                    <label>Salto Horizontal (cm)</label>
-                    <input type="number" id="saltoHorizontal" step="0.1" required>
-                </div>
-                <div class="form-group">
-                    <label>Abdominais (rep/min)</label>
-                    <input type="number" id="abdominais" required>
-                </div>
-            </div>
+    <div class="form-section">
+      <h3>Antropometria</h3>
+      <div class="form-grid">
+        <div class="form-group">
+          <label>Massa Corporal (kg)</label>
+          <input type="number" id="massaCorporal" step="0.1" required />
         </div>
+        <div class="form-group">
+          <label>Estatura (cm)</label>
+          <input type="number" id="estatura" step="0.1" required />
+        </div>
+        <div class="form-group">
+          <label>Envergadura (cm)</label>
+          <input type="number" id="envergadura" step="0.1" />
+        </div>
+      </div>
+    </div>
 
-        <div class="actions">
-            <button type="button" class="btn btn-secondary">Limpar</button>
-            <button type="submit" class="btn btn-primary">Salvar</button>
+    <div class="form-section">
+      <h3>Testes de Aptidão</h3>
+      <div class="form-grid">
+        <div class="form-group">
+          <label>Arremesso (cm)</label>
+          <input type="number" id="medicineBall" step="0.1" required />
         </div>
-    </form>
+        <div class="form-group">
+          <label>Salto Horizontal (cm)</label>
+          <input type="number" id="saltoHorizontal" step="0.1" required />
+        </div>
+        <div class="form-group">
+          <label>Abdominais (rep/min)</label>
+          <input type="number" id="abdominais" required />
+        </div>
+      </div>
+    </div>
+
+    <div class="actions">
+      <button type="button" class="btn btn-secondary">Limpar</button>
+      <button type="submit" class="btn btn-primary">Salvar</button>
+    </div>
+  </form>
+
+  <button type="button" class="btn btn-secondary" onclick="loadCSV()">
+    Carregar Dados
+  </button>
 </div>
+{% endblock %} {% block scripts %} {% super() %}
+
+<script>
+  function loadCSV() {
+    // Criar o overlay do dialog
+    const overlay = document.createElement("div");
+    overlay.style.cssText = `
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.5);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+    `;
+
+    // Criar o dialog
+    const dialog = document.createElement("div");
+    dialog.style.cssText = `
+    background: white;
+    padding: 30px;
+    border-radius: 8px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    max-width: 400px;
+    width: 90%;
+    `;
+
+    // Conteúdo do dialog
+    dialog.innerHTML = `
+    <h2 style="margin-top: 0; color: #333;">Importar arquivo CSV</h2>
+    <p style="color: #666; margin-bottom: 20px;">Selecione um arquivo CSV para importar</p>
+
+    <input type="file" id="csvFileInput" accept=".csv" style="
+        width: 100%;
+        padding: 10px;
+        margin-bottom: 20px;
+        border: 2px dashed #ccc;
+        border-radius: 4px;
+        cursor: pointer;
+    ">
+
+    <div style="display: flex; gap: 10px; justify-content: flex-end;">
+        <button id="cancelarBtn" style="
+        padding: 10px 20px;
+        border: 1px solid #ccc;
+        background: white;
+        border-radius: 4px;
+        cursor: pointer;
+        ">Cancelar</button>
+        
+        <button id="importarBtn" style="
+        padding: 10px 20px;
+        border: none;
+        background: #007bff;
+        color: white;
+        border-radius: 4px;
+        cursor: pointer;
+        ">Importar</button>
+    </div>
+    `;
+
+    function fecharDialog() {
+    document.body.removeChild(overlay);
+  }
+
+  // Mostrar informações do arquivo selecionado
+  document.getElementById("csvFileInput").addEventListener("change", (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      document.getElementById("fileInfo").style.display = "block";
+      document.getElementById("fileName").textContent = 
+        `${file.name} (${(file.size / 1024).toFixed(2)} KB)`;
+    }
+  });
+
+  // Event listeners
+  document.getElementById("cancelarBtn").addEventListener("click", fecharDialog);
+
+  document.getElementById("importarBtn").addEventListener("click", async () => {
+    const fileInput = document.getElementById("csvFileInput");
+    const file = fileInput.files[0];
+
+    if (!file) {
+      alert("Por favor, selecione um arquivo CSV");
+      return;
+    }
+
+    // Validar extensão
+    if (!file.name.toLowerCase().endsWith('.csv')) {
+      alert("Por favor, selecione apenas arquivos CSV");
+      return;
+    }
+
+    // Criar FormData com o nome 'csvFile' que o backend espera
+    const formData = new FormData();
+    formData.append('csvFile', file);  // IMPORTANTE: 'csvFile' deve ser o nome esperado
+
+    // Desabilitar botões e mostrar progresso
+    const importarBtn = document.getElementById("importarBtn");
+    const cancelarBtn = document.getElementById("cancelarBtn");
+    importarBtn.disabled = true;
+    cancelarBtn.disabled = true;
+    importarBtn.textContent = "Enviando...";
+    
+    document.getElementById("progressBar").style.display = "block";
+    document.getElementById("progress").style.width = "30%";
+
+    try {
+      // Enviar para o backend
+      const response = await fetch('/loadCSVData', {
+        method: 'POST',
+        body: formData
+        // Não adicionar Content-Type, o browser define automaticamente com boundary
+      });
+
+      // Atualizar progresso
+      document.getElementById("progress").style.width = "70%";
+
+      // O backend renderiza templates, então precisamos verificar o status
+      if (response.ok) {
+        // Completar barra de progresso
+        document.getElementById("progress").style.width = "100%";
+        document.getElementById("progressText").textContent = "Concluído! Redirecionando...";
+        
+        // Backend retorna render_template, então fazemos redirect completo
+        setTimeout(() => {
+          window.location.replace('/loadCSVData');
+        }, 500);
+      } else {
+        // Erro no servidor
+        alert('Erro ao importar arquivo. Por favor, tente novamente.');
+        
+        // Resetar UI
+        importarBtn.disabled = false;
+        cancelarBtn.disabled = false;
+        importarBtn.textContent = "Importar";
+        document.getElementById("progressBar").style.display = "none";
+      }
+    } catch (error) {
+      console.error('Erro ao enviar arquivo:', error);
+      alert('Erro de conexão. Por favor, verifique sua internet e tente novamente.');
+      
+      // Resetar UI
+      importarBtn.disabled = false;
+      cancelarBtn.disabled = false;
+      importarBtn.textContent = "Importar";
+      document.getElementById("progressBar").style.display = "none";
+    }
+  });
+
+  // Fechar ao clicar fora do dialog
+  overlay.addEventListener("click", (e) => {
+    if (e.target === overlay) {
+      fecharDialog();
+    }
+  });
+}
+
+</script>
 {% endblock %}

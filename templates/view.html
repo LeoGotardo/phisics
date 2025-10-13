@@ -2,134 +2,426 @@
 
 {% block content %}
 {% super() %}
+
+<!-- CDN do Chart.js -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+
 <!-- VISUALIZAÇÃO -->
 <div id="visualizacao" class="screen">
-    <div class="viz-grid">
-        <div class="chart">
-            <h3>Distribuição de Clusters (PCA)</h3>
-            <div class="chart-placeholder">
-                <div style="text-align: center;">
-                    <div style="font-size: 1.2em; margin-bottom: 12px; color: #888;">Componentes Principais</div>
-                    <div style="font-size: 0.85em; color: #555; line-height: 1.6;">
-                        PC1: 45.3% variância explicada<br>
-                        PC2: 28.7% variância explicada<br>
-                        Total: 74.0% dos dados
-                    </div>
-                </div>
-            </div>
-            <div style="margin-top: 16px; font-size: 0.85em; color: #666;">
-                Mostra separação natural entre grupos de atletas baseada em todas as características.
-            </div>
-        </div>
-
-        <div class="chart">
-            <h3>Potência: Superior vs Inferior</h3>
-            <div class="chart-placeholder">
-                <div style="text-align: center;">
-                    <div style="font-size: 1.2em; margin-bottom: 12px; color: #888;">Correlação</div>
-                    <div style="font-size: 0.85em; color: #555; line-height: 1.6;">
-                        Coeficiente: r = 0.78<br>
-                        p-value &lt; 0.001<br>
-                        Correlação forte positiva
-                    </div>
-                </div>
-            </div>
-            <div style="margin-top: 16px; font-size: 0.85em; color: #666;">
-                Atletas com alta potência superior tendem a ter alta potência inferior. Indica desenvolvimento equilibrado.
-            </div>
-        </div>
-
-        <div class="chart">
-            <h3>Força do Core por Cluster</h3>
-            <div class="chart-placeholder">
-                <div style="text-align: center;">
-                    <div style="font-size: 1.2em; margin-bottom: 12px; color: #888;">Abdominais (rep/min)</div>
-                    <div style="font-size: 0.85em; color: #555; line-height: 1.6;">
-                        Elite: 52 ± 4.2<br>
-                        Competitivo: 41 ± 3.8<br>
-                        Intermediário: 33 ± 4.1<br>
-                        Iniciante: 24 ± 3.5
-                    </div>
-                </div>
-            </div>
-            <div style="margin-top: 16px; font-size: 0.85em; color: #666;">
-                Diferença significativa entre clusters (ANOVA p &lt; 0.001). Core forte distingue atletas de elite.
-            </div>
-        </div>
-
-        <div class="chart">
-            <h3>Perfil Médio por Cluster</h3>
-            <div class="chart-placeholder">
-                <div style="text-align: center;">
-                    <div style="font-size: 1.2em; margin-bottom: 12px; color: #888;">Scores Normalizados (0-100)</div>
-                    <div style="font-size: 0.85em; color: #555; line-height: 1.6;">
-                        Elite: 85-92 em todas dimensões<br>
-                        Competitivo: 65-75<br>
-                        Intermediário: 45-58<br>
-                        Iniciante: 22-35
-                    </div>
-                </div>
-            </div>
-            <div style="margin-top: 16px; font-size: 0.85em; color: #666;">
-                Atletas elite apresentam desenvolvimento homogêneo. Iniciantes têm desenvolvimento desigual.
-            </div>
-        </div>
+    <!-- Loading State -->
+    <div id="loadingState" style="text-align: center; padding: 60px;">
+        <div style="font-size: 1.2em; color: #888;">Carregando dados...</div>
+        <div style="margin-top: 16px; color: #666;">Processando análises estatísticas</div>
     </div>
 
-    <div style="background: #111; border: 1px solid #222; border-radius: 8px; padding: 24px; margin-top: 24px;">
-        <h3 style="font-size: 1em; color: #fff; margin-bottom: 16px;">Indicadores de Qualidade do Clustering</h3>
-        <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 24px;">
-            <div>
-                <div style="font-size: 0.85em; color: #666; margin-bottom: 4px;">Silhouette Score</div>
-                <div style="font-size: 1.5em; font-weight: 600; color: #4a9eff;">0.67</div>
-                <div style="font-size: 0.8em; color: #666; margin-top: 4px;">Boa separação entre clusters</div>
+    <!-- Conteúdo Principal (hidden inicialmente) -->
+    <div id="mainContent" style="display: none;">
+        <div class="viz-grid">
+            <!-- Gráfico 1: PCA Scatter -->
+            <div class="chart">
+                <h3>Distribuição de Clusters (PCA)</h3>
+                <canvas id="pcaChart" style="max-height: 300px;"></canvas>
+                <div id="pcaInfo" style="margin-top: 16px; font-size: 0.85em; color: #666;"></div>
             </div>
-            <div>
-                <div style="font-size: 0.85em; color: #666; margin-bottom: 4px;">Davies-Bouldin Index</div>
-                <div style="font-size: 1.5em; font-weight: 600; color: #10b981;">0.82</div>
-                <div style="font-size: 0.8em; color: #666; margin-top: 4px;">Clusters bem definidos</div>
+
+            <!-- Gráfico 2: Correlação -->
+            <div class="chart">
+                <h3>Potência: Superior vs Inferior</h3>
+                <canvas id="correlacaoChart" style="max-height: 300px;"></canvas>
+                <div id="correlacaoInfo" style="margin-top: 16px; font-size: 0.85em; color: #666;"></div>
             </div>
-            <div>
-                <div style="font-size: 0.85em; color: #666; margin-bottom: 4px;">Inércia Total</div>
-                <div style="font-size: 1.5em; font-weight: 600; color: #7c3aed;">1,247</div>
-                <div style="font-size: 0.8em; color: #666; margin-top: 4px;">Compactação adequada</div>
+
+            <!-- Gráfico 3: Box Plot Core -->
+            <div class="chart">
+                <h3>Força do Core por Cluster</h3>
+                <canvas id="coreChart" style="max-height: 300px;"></canvas>
+                <div id="coreInfo" style="margin-top: 16px; font-size: 0.85em; color: #666;"></div>
+            </div>
+
+            <!-- Gráfico 4: Radar -->
+            <div class="chart">
+                <h3>Perfil Médio por Cluster</h3>
+                <canvas id="radarChart" style="max-height: 300px;"></canvas>
+                <div id="radarInfo" style="margin-top: 16px; font-size: 0.85em; color: #666;"></div>
             </div>
         </div>
-    </div>
 
-    <div style="background: #111; border: 1px solid #222; border-radius: 8px; padding: 24px; margin-top: 16px;">
-        <h3 style="font-size: 1em; color: #fff; margin-bottom: 16px;">Insights Estatísticos</h3>
-        <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 16px; font-size: 0.9em; color: #aaa; line-height: 1.8;">
-            <div>
-                <strong style="color: #fff;">Preditores mais importantes:</strong><br>
-                1. Medicine Ball (35% do peso)<br>
-                2. Salto Horizontal (35%)<br>
-                3. Abdominais (25%)
-            </div>
-            <div>
-                <strong style="color: #fff;">Taxas de transição:</strong><br>
-                Iniciante → Intermediário: 6-12 meses<br>
-                Intermediário → Competitivo: 12-24 meses<br>
-                Competitivo → Elite: 24-36 meses
-            </div>
-            <div>
-                <strong style="color: #fff;">Zona de risco à saúde:</strong><br>
-                IMC &gt; 25.0: 8 atletas (5.1%)<br>
-                RCE &gt; 0.50: 12 atletas (7.7%)<br>
-                Requer acompanhamento nutricional
-            </div>
-            <div>
-                <strong style="color: #fff;">Recomendações gerais:</strong><br>
-                Elite: manutenção + especialização<br>
-                Competitivo: força máxima + técnica<br>
-                Intermediário/Iniciante: base + volume
+        <!-- Métricas de Qualidade -->
+        <div style="background: #111; border: 1px solid #222; border-radius: 8px; padding: 24px; margin-top: 24px;">
+            <h3 style="font-size: 1em; color: #fff; margin-bottom: 16px;">Indicadores de Qualidade do Clustering</h3>
+            <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 24px;">
+                <div>
+                    <div style="font-size: 0.85em; color: #666; margin-bottom: 4px;">Silhouette Score</div>
+                    <div id="silhouetteValue" style="font-size: 1.5em; font-weight: 600; color: #4a9eff;">-</div>
+                    <div style="font-size: 0.8em; color: #666; margin-top: 4px;">Separação entre clusters</div>
+                </div>
+                <div>
+                    <div style="font-size: 0.85em; color: #666; margin-bottom: 4px;">Davies-Bouldin Index</div>
+                    <div id="daviesBouldinValue" style="font-size: 1.5em; font-weight: 600; color: #10b981;">-</div>
+                    <div style="font-size: 0.8em; color: #666; margin-top: 4px;">Qualidade dos clusters</div>
+                </div>
+                <div>
+                    <div style="font-size: 0.85em; color: #666; margin-bottom: 4px;">Inércia Total</div>
+                    <div id="inertiaValue" style="font-size: 1.5em; font-weight: 600; color: #7c3aed;">-</div>
+                    <div style="font-size: 0.8em; color: #666; margin-top: 4px;">Compactação dos grupos</div>
+                </div>
             </div>
         </div>
-    </div>
 
-    <div class="actions">
-        <button class="btn btn-primary">Gerar Relatório Completo</button>
-        <button class="btn btn-secondary">Exportar Dados</button>
+        <!-- Insights -->
+        <div style="background: #111; border: 1px solid #222; border-radius: 8px; padding: 24px; margin-top: 16px;">
+            <h3 style="font-size: 1em; color: #fff; margin-bottom: 16px;">Insights Estatísticos</h3>
+            <div id="insightsContainer" style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 16px; font-size: 0.9em; color: #aaa; line-height: 1.8;">
+                <!-- Será preenchido via JS -->
+            </div>
+        </div>
+
+        <!-- Ações -->
+        <div class="actions" style="margin-top: 24px;">
+            <button class="btn btn-primary" onclick="gerarRelatorio()">Gerar Relatório Completo</button>
+            <button class="btn btn-secondary" onclick="exportarDados()">Exportar Dados</button>
+        </div>
     </div>
 </div>
+
+<script>
+// Cores para os clusters
+const CORES_CLUSTERS = {
+    'Elite': '#10b981',
+    'Competitivo': '#4a9eff',
+    'Intermediário': '#f59e0b',
+    'Iniciante': '#ef4444'
+};
+
+let charts = {}; // Armazenar instâncias dos gráficos
+
+// Carregar dados ao abrir a página
+document.addEventListener('DOMContentLoaded', function() {
+    carregarDados();
+});
+
+async function carregarDados() {
+    try {
+        const response = await fetch('/api/dados-visualizacao');
+        
+        if (!response.ok) {
+            throw new Error('Erro ao carregar dados');
+        }
+        
+        const dados = await response.json();
+        
+        // Ocultar loading e mostrar conteúdo
+        document.getElementById('loadingState').style.display = 'none';
+        document.getElementById('mainContent').style.display = 'block';
+        
+        // Criar gráficos
+        criarGraficoPCA(dados.pca_data, dados.variance_explained);
+        criarGraficoCorrelacao(dados.potencia_data);
+        criarGraficoCore(dados.core_data);
+        criarGraficoRadar(dados.perfil_data);
+        
+        // Atualizar métricas
+        atualizarMetricas(dados.metricas);
+        
+        // Atualizar insights
+        atualizarInsights(dados.estatisticas);
+        
+    } catch (error) {
+        console.error('Erro:', error);
+        document.getElementById('loadingState').innerHTML = `
+            <div style="color: #ef4444;">
+                <div style="font-size: 1.2em;">Erro ao carregar dados</div>
+                <div style="margin-top: 8px;">${error.message}</div>
+                <button onclick="carregarDados()" style="margin-top: 16px; padding: 8px 16px; background: #007bff; color: white; border: none; border-radius: 4px; cursor: pointer;">
+                    Tentar Novamente
+                </button>
+            </div>
+        `;
+    }
+}
+
+function criarGraficoPCA(pca_data, variance) {
+    const ctx = document.getElementById('pcaChart').getContext('2d');
+    
+    const datasets = pca_data.map(grupo => ({
+        label: grupo.nivel,
+        data: grupo.x.map((x, i) => ({x: x, y: grupo.y[i]})),
+        backgroundColor: CORES_CLUSTERS[grupo.nivel] + '80', // 80 = opacidade
+        borderColor: CORES_CLUSTERS[grupo.nivel],
+        pointRadius: 5,
+        pointHoverRadius: 7
+    }));
+    
+    charts.pca = new Chart(ctx, {
+        type: 'scatter',
+        data: { datasets },
+        options: {
+            responsive: true,
+            maintainAspectRatio: true,
+            plugins: {
+                legend: { 
+                    display: true,
+                    labels: { color: '#fff' }
+                },
+                tooltip: {
+                    callbacks: {
+                        label: (context) => `${context.dataset.label}: (${context.parsed.x.toFixed(2)}, ${context.parsed.y.toFixed(2)})`
+                    }
+                }
+            },
+            scales: {
+                x: { 
+                    title: { display: true, text: `PC1 (${variance.pc1}%)`, color: '#888' },
+                    ticks: { color: '#888' },
+                    grid: { color: '#222' }
+                },
+                y: { 
+                    title: { display: true, text: `PC2 (${variance.pc2}%)`, color: '#888' },
+                    ticks: { color: '#888' },
+                    grid: { color: '#222' }
+                }
+            }
+        }
+    });
+    
+    document.getElementById('pcaInfo').innerHTML = 
+        `Variância total explicada: ${variance.total}% dos dados. Mostra separação natural entre grupos.`;
+}
+
+function criarGraficoCorrelacao(dados) {
+    if (!dados) return;
+    
+    const ctx = document.getElementById('correlacaoChart').getContext('2d');
+    
+    const pontos = dados.x.map((x, i) => ({x: x, y: dados.y[i]}));
+    
+    charts.correlacao = new Chart(ctx, {
+        type: 'scatter',
+        data: {
+            datasets: [{
+                label: 'Atletas',
+                data: pontos,
+                backgroundColor: '#4a9eff80',
+                borderColor: '#4a9eff',
+                pointRadius: 4
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: true,
+            plugins: {
+                legend: { display: false },
+                tooltip: {
+                    callbacks: {
+                        label: (context) => `Superior: ${context.parsed.x.toFixed(1)}, Inferior: ${context.parsed.y.toFixed(1)}`
+                    }
+                }
+            },
+            scales: {
+                x: { 
+                    title: { display: true, text: 'Potência Superior', color: '#888' },
+                    ticks: { color: '#888' },
+                    grid: { color: '#222' }
+                },
+                y: { 
+                    title: { display: true, text: 'Potência Inferior', color: '#888' },
+                    ticks: { color: '#888' },
+                    grid: { color: '#222' }
+                }
+            }
+        }
+    });
+    
+    document.getElementById('correlacaoInfo').innerHTML = 
+        `Correlação: r = ${dados.correlacao} (p < ${dados.p_value}). ${dados.correlacao > 0.7 ? 'Correlação forte positiva' : 'Correlação moderada'}.`;
+}
+
+function criarGraficoCore(dados) {
+    if (!dados) return;
+    
+    const ctx = document.getElementById('coreChart').getContext('2d');
+    
+    charts.core = new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: dados.map(d => d.nivel),
+            datasets: [{
+                label: 'Abdominais (média)',
+                data: dados.map(d => d.media),
+                backgroundColor: dados.map(d => CORES_CLUSTERS[d.nivel] + '80'),
+                borderColor: dados.map(d => CORES_CLUSTERS[d.nivel]),
+                borderWidth: 2
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: true,
+            plugins: {
+                legend: { display: false },
+                tooltip: {
+                    callbacks: {
+                        label: (context) => {
+                            const item = dados[context.dataIndex];
+                            return `${item.media.toFixed(1)} ± ${item.std.toFixed(1)} rep/min`;
+                        }
+                    }
+                }
+            },
+            scales: {
+                x: { ticks: { color: '#888' }, grid: { display: false } },
+                y: { 
+                    title: { display: true, text: 'Repetições/minuto', color: '#888' },
+                    ticks: { color: '#888' },
+                    grid: { color: '#222' }
+                }
+            }
+        }
+    });
+    
+    document.getElementById('coreInfo').innerHTML = 
+        'Diferença significativa entre clusters. Core forte distingue atletas de elite.';
+}
+
+function criarGraficoRadar(dados) {
+    if (!dados) return;
+    
+    const ctx = document.getElementById('radarChart').getContext('2d');
+    
+    const datasets = dados.map(grupo => ({
+        label: grupo.nivel,
+        data: grupo.valores,
+        backgroundColor: CORES_CLUSTERS[grupo.nivel] + '40',
+        borderColor: CORES_CLUSTERS[grupo.nivel],
+        borderWidth: 2,
+        pointBackgroundColor: CORES_CLUSTERS[grupo.nivel]
+    }));
+    
+    charts.radar = new Chart(ctx, {
+        type: 'radar',
+        data: {
+            labels: dados[0].features.map(f => f.replace('_', ' ').toUpperCase()),
+            datasets
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: true,
+            plugins: {
+                legend: { 
+                    display: true,
+                    labels: { color: '#fff' }
+                }
+            },
+            scales: {
+                r: {
+                    beginAtZero: true,
+                    max: 100,
+                    ticks: { color: '#888', backdropColor: 'transparent' },
+                    grid: { color: '#222' },
+                    pointLabels: { color: '#888' }
+                }
+            }
+        }
+    });
+    
+    document.getElementById('radarInfo').innerHTML = 
+        'Atletas elite apresentam desenvolvimento homogêneo em todas as dimensões.';
+}
+
+function atualizarMetricas(metricas) {
+    document.getElementById('silhouetteValue').textContent = metricas.silhouette;
+    document.getElementById('daviesBouldinValue').textContent = metricas.davies_bouldin;
+    document.getElementById('inertiaValue').textContent = metricas.inertia.toLocaleString();
+}
+
+function atualizarInsights(stats) {
+    const container = document.getElementById('insightsContainer');
+    container.innerHTML = `
+        <div>
+            <strong style="color: #fff;">Distribuição de Atletas:</strong><br>
+            ${Object.entries(stats.distribuicao).map(([nivel, qtd]) => 
+                `${nivel}: ${qtd} atletas`
+            ).join('<br>')}
+        </div>
+        <div>
+            <strong style="color: #fff;">Total de Atletas:</strong><br>
+            ${stats.total_atletas} atletas analisados
+        </div>
+        <div>
+            <strong style="color: #fff;">Zona de risco à saúde:</strong><br>
+            IMC > 25.0: ${stats.imc_alto} atletas<br>
+            Requer acompanhamento nutricional
+        </div>
+        <div>
+            <strong style="color: #fff;">Recomendações gerais:</strong><br>
+            Elite: manutenção + especialização<br>
+            Competitivo: força máxima + técnica<br>
+            Intermediário/Iniciante: base + volume
+        </div>
+    `;
+}
+
+function gerarRelatorio() {
+    alert('Funcionalidade em desenvolvimento: Gerar relatório PDF');
+}
+
+function exportarDados() {
+    alert('Funcionalidade em desenvolvimento: Exportar para CSV/Excel');
+}
+</script>
+
+<style>
+.viz-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(500px, 1fr));
+    gap: 24px;
+    margin-bottom: 24px;
+}
+
+.chart {
+    background: #0a0a0a;
+    border: 1px solid #222;
+    border-radius: 8px;
+    padding: 20px;
+}
+
+.chart h3 {
+    font-size: 1em;
+    color: #fff;
+    margin: 0 0 16px 0;
+}
+
+.btn {
+    padding: 12px 24px;
+    border: none;
+    border-radius: 6px;
+    font-size: 0.95em;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.btn-primary {
+    background: #007bff;
+    color: white;
+}
+
+.btn-primary:hover {
+    background: #0056b3;
+}
+
+.btn-secondary {
+    background: #6c757d;
+    color: white;
+}
+
+.btn-secondary:hover {
+    background: #545b62;
+}
+
+.actions {
+    display: flex;
+    gap: 12px;
+    justify-content: center;
+}
+</style>
+
 {% endblock %}

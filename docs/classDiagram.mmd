@@ -1,15 +1,12 @@
 classDiagram
     class Controller {
-        -n_clusters: int
-        -scaler: StandardScaler
-        -kmeans: KMeans
-        -pca: PCA
-        +dashboardView()
-        +cadastroView()
-        +analiseView()
-        +visualizacaoView()
+        +setupKMeans(n_clusters: int)
+        +loadCSVData(file: bytes)
+        +getDashboardInfo()
+        +getViewInfo()
+        +getAthlets(filter: dict)
         +putAthlete(dados: dict)
-        +listAthletes(filtros: dict)
+        +putAthlete(dados: dict)
         +getCluster(clusterId: str)
         +getModelQuality()
         +getModelMetrics()

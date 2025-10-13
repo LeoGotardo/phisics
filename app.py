@@ -1,20 +1,78 @@
+"""
+TODO:
+    - Arrumar tabela de dados no analise.html
+"""
+
+
 from flask import Flask, render_template, request, redirect, url_for, flash, Blueprint
 from controller import Controller
+from model import Config
+import traceback, sys, json
 
-class view:
+
+class View:
     def __init__(self, app):
         self.app = app
         self.controller = Controller()
         self.blueprint = Blueprint('view', __name__, template_folder='templates')
         
         self.app.register_blueprint(self.blueprint)
+        self.app.register_error_handler(Exception, self.handleException)
         self.defineRouters()
+        
+        self.app.run(debug=True)
         
     def defineRouters(self):
         self.app.add_url_rule('/', view_func=self.index, methods=['GET'])
         self.app.add_url_rule('/analise', view_func=self.review, methods=['GET', 'POST'])
         self.app.add_url_rule('/createAthlete', view_func=self.createAthlete, methods=['GET', 'POST'])
         self.app.add_url_rule('/viewData', view_func=self.viewPage, methods=['GET'])
+        self.app.add_url_rule('/loadCSVData', view_func=self.loadCSVData, methods=['POST'])
+    
+    
+    def handleException(self, e):
+        excType, excValue, excTraceback = sys.exc_info()
+
+        if excTraceback:
+            lastFrame = traceback.extract_tb(excTraceback)[-1]
+            errorFile = lastFrame.filename
+            errorLine = lastFrame.lineno
+            errorFunction = lastFrame.name
+            errorCode = lastFrame.line if lastFrame.line else "N/A"
+        else:
+            errorFile = "Desconhecido"
+            errorLine = "N/A"
+            errorFunction = "N/A"
+            errorCode = "N/A"
+
+        fullTraceback = ''.join(traceback.format_exception(excType, excValue, excTraceback))
+
+        errorDetails = None
+        debugInfo = None
+
+        if self.app.config.get('DEBUG'):
+            errorDetails = str(e)
+            debugInfo = {
+                'file': errorFile.split('/')[-1] if errorFile else 'N/A',
+                'line': errorLine,
+                'function': errorFunction,
+                'code': errorCode,
+                'fullPath': errorFile,
+                'traceback': fullTraceback
+            }
+
+        if hasattr(e, 'code'):
+            return render_template('errorPage.html',
+                                errorCode=e.code,
+                                errorMessage=getattr(e, 'description', 'Erro desconhecido'),
+                                errorDetails=errorDetails,
+                                debugInfo=debugInfo), e.code
+
+        return render_template('errorPage.html',
+                            errorCode=500,
+                            erroMessage="Ocorreu um erro inesperado. Nossa equipe foi notificada.",
+                            errorDetails=errorDetails,
+                            debugInfo=debugInfo), 500
     
     
     def index(self):
@@ -23,6 +81,20 @@ class view:
             return render_template('dashboard.html')
         if status == -1:
             return render_template('errorPage.html', **info)
+        
+        
+    def loadCSVData(self):
+        if request.method == 'POST':
+            status, response = self.controller.loadCSVData(request.files['csvFile'])
+            if status == -1:
+                return render_template('errorPage.html', **response)
+            if status == True:
+                flash(response, category='success')
+            else:
+                flash(response, category='error')
+            return render_template('cadastro.html')
+        else:
+            return render_template('404.html')
     
     
     def createAthlete(self):
@@ -45,7 +117,7 @@ class view:
     def review(self):
         match request.method:
             case 'POST':
-                status, response = self.controller.createCluster(request.form)
+                status, response = self.controller.getAthlets(request.form)
                 if status == -1:
                     return render_template('errorPage.html', **response)
                 if status == True:
@@ -68,3 +140,6 @@ class view:
         else:
             flash(info, category='error')
             return render_template('view.html')
+        
+if __name__ == '__main__':
+    View(Config.app)

@@ -7,110 +7,114 @@
     <div class="metrics">
         <div class="metric-card">
             <div class="label">Total Atletas</div>
-            <div class="value">156</div>
+            <div class="value">{{ totalAthlets }}</div>
         </div>
         <div class="metric-card">
             <div class="label">Elite</div>
-            <div class="value">12</div>
+            <div class="value">{{ eliteAthlets }}</div>
         </div>
         <div class="metric-card">
             <div class="label">Competitivo</div>
-            <div class="value">34</div>
+            <div class="value">{{ competitiveAthlets }}</div>
         </div>
         <div class="metric-card">
             <div class="label">Desenvolvimento</div>
-            <div class="value">110</div>
+            <div class="value">{{ intermediateAthlets }}</div>
+        </div>
+        <div class="metric-card">
+            <div class="label">Iniciante</div>
+            <div class="value">{{ beginnerAthlets }}</div>
         </div>
     </div>
 
     <div class="clusters">
         <div class="cluster elite">
             <h3>Elite</h3>
-            <p style="color: #888; font-size: 0.9em;">12 atletas • Potencial alto</p>
+            <p style="color: #888; font-size: 0.9em;">{{ eliteAthlets.size }} atletas • Potencial alto</p>
             <div class="stats">
                 <div class="stat">
                     <div class="label">Altura</div>
-                    <div class="value">192</div>
+                    <div class="value">{{ eliteAthlets.heightMed }}</div>
                 </div>
                 <div class="stat">
-                    <div class="label">Medicine</div>
-                    <div class="value">485</div>
+                    <div class="label">Arremesso</div>
+                    <div class="value">{{ eliteAthlets.arremessoMed }}</div>
                 </div>
                 <div class="stat">
                     <div class="label">Salto</div>
-                    <div class="value">218</div>
+                    <div class="value">{{ eliteAthlets.saltoMed }}</div>
                 </div>
                 <div class="stat">
                     <div class="label">Abdom</div>
-                    <div class="value">52</div>
+                    <div class="value">{{ eliteAthlets.abdominaisMed }}</div>
                 </div>
             </div>
         </div>
 
         <div class="cluster competitive">
             <h3>Competitivo</h3>
-            <p style="color: #888; font-size: 0.9em;">34 atletas • Potencial médio-alto</p>
+            <p style="color: #888; font-size: 0.9em;">{{ competitiveAthlets.size }} atletas • Potencial médio-alto</p>
             <div class="stats">
                 <div class="stat">
                     <div class="label">Altura</div>
-                    <div class="value">187</div>
+                    <div class="value">{{ competitive.heightMed }}</div>
                 </div>
                 <div class="stat">
-                    <div class="label">Medicine</div>
-                    <div class="value">372</div>
+                    <div class="label">Arremesso</div>
+                    <div class="value">{{ competitive.arremessoMed }}</div>
                 </div>
                 <div class="stat">
                     <div class="label">Salto</div>
-                    <div class="value">186</div>
+                    <div class="value">{{ competitive.saltoMed }}</div>
                 </div>
                 <div class="stat">
                     <div class="label">Abdom</div>
-                    <div class="value">41</div>
+                    <div class="value">{{ competitive.abdominaisMed }}</div>
                 </div>
             </div>
         </div>
 
         <div class="cluster intermediate">
             <h3>Intermediário</h3>
-            <p style="color: #888; font-size: 0.9em;">58 atletas • Desenvolvimento</p>
-                <div class="stats">                        <div class="stat">
+            <p style="color: #888; font-size: 0.9em;">{{ intermediateAthlets.size }} atletas • Desenvolvimento</p>
+                <div class="stat">
                     <div class="label">Altura</div>
-                    <div class="value">183</div>
+                    <div class="value">{{ intermediate.heightMed }}</div>
                 </div>
                 <div class="stat">
-                    <div class="label">Medicine</div>
-                    <div class="value">298</div>
+                    <div class="label">Arremesso</div>
+                    <div class="value">{{ intermediate.arremessoMed }}</div>
                 </div>
                 <div class="stat">
                     <div class="label">Salto</div>
-                    <div class="value">154</div>
+                    <div class="value">{{ intermediate.saltoMed }}</div>
                 </div>
                 <div class="stat">
                     <div class="label">Abdom</div>
-                    <div class="value">33</div>
+                    <div class="value">{{ intermediate.abdominaisMed }}</div>
                 </div>
             </div>
         </div>
 
         <div class="cluster beginner">
             <h3>Iniciante</h3>
-            <p style="color: #888; font-size: 0.9em;">52 atletas • Base</p>
+            <p style="color: #888; font-size: 0.9em;">{{ beginnerAthlets.size }} atletas • Base</p>
             <div class="stats">
                 <div class="stat">
                     <div class="label">Altura</div>
-                    <div class="value">180</div>
+                    <div class="value">{{ beginner.heightMed }}</div>
                 </div>
                 <div class="stat">
-                    <div class="label">Medicine</div>
-                    <div class="value">215</div>
+                    <div class="label">Arremesso</div>
+                    <div class="value">{{ beginner.arremessoMed }}</div>
                 </div>
                 <div class="stat">
                     <div class="label">Salto</div>
-                    <div class="value">128</div>
+                    <div class="value">{{ beginner.saltoMed }}</div>
                 </div>
                 <div class="stat">
                     <div class="label">Abdom</div>
-                    <div class="value">24</div>
+                    <div class="value">{{ beginner.abdominaisMed }}</div>
                 </div>
             </div>
         </div>
