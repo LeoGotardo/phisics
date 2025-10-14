@@ -40,7 +40,7 @@
             align-items: center !important;
             justify-content: center !important;
             font-size: 3rem !important;
-            color: #242424 !important;
+            color: #c4c4c4 !important;
             position: relative !important;
             animation: pulse 2s infinite !important;
         }
@@ -77,14 +77,14 @@
         .error-title {
             font-size: 2.5rem !important;
             font-weight: 700 !important;
-            color: var(--dark-color, #1e293b) !important;
+            color: var(--dark-color, #6366f1) !important;
             margin-bottom: 1rem !important;
             line-height: 1.2 !important;
         }
 
         .error-message {
             font-size: 1.1rem !important;
-            color: var(--gray-color, #64748b) !important;
+            color: var(--gray-color, #ffffff) !important;
             margin-bottom: 2.5rem !important;
             line-height: 1.7 !important;
             max-width: 400px !important;
@@ -120,25 +120,27 @@
 
         .error-container .btn-primary-clean {
             background: linear-gradient(135deg, var(--primary-color, #6366f1), var(--primary-dark, #4f46e5)) !important;
-            color: #ffffff !important;
+            color: #c4c4c4 !important;
             box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1) !important;
         }
 
         .error-container .btn-primary-clean:hover {
             transform: translateY(-2px) !important;
             box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1) !important;
-            color: #ffffff !important;
+            color: #dddddd !important;
             text-decoration: none !important;
         }
 
         .error-container .btn-secondary-clean {
-            background:  #f1f5f9 !important;
-            color: var(--gray-color, #64748b) !important;
+            background:  #787878 !important;
+            color: var(--gray-color, #ffffff) !important;
             border: 1px solid #e2e8f0 !important;
+            align-items: center;
+
         }
 
         .error-container .btn-secondary-clean:hover {
-            background: #e2e8f0 !important;
+            background: #060606 !important;
             transform: translateY(-1px) !important;
             color: var(--dark-color, #1e293b) !important;
             text-decoration: none !important;
@@ -234,6 +236,7 @@
         
         .debug-content-compact.show {
             display: block;
+            background-color: black
         }
         
         .debug-grid-compact {
@@ -244,7 +247,7 @@
         }
         
         .debug-item-compact {
-            background: white;
+            background: rgb(58, 73, 98);
             border: 1px solid #e5e7eb;
             border-radius: 8px;
             padding: 12px;
@@ -253,7 +256,7 @@
         .debug-label-compact {
             font-size: 0.8rem;
             font-weight: 600;
-            color: #6b7280;
+            color: #f6f6f6;
             text-transform: uppercase;
             margin-bottom: 5px;
         }
@@ -261,7 +264,7 @@
         .debug-value-compact {
             font-family: 'Monaco', 'Menlo', monospace;
             font-size: 0.9rem;
-            color: #1f2937;
+            color: #e3e3e3;
             word-break: break-all;
         }
         
@@ -286,7 +289,7 @@
         }
         
         .debug-solution-compact h5 {
-            color: #065f46;
+            color: #89b0a5;
             margin: 0 0 10px 0;
             font-size: 0.95rem;
             font-weight: 600;
@@ -363,7 +366,7 @@
             
             .error-actions {
                 flex-direction: column !important;
-                align-items: stretch !important;
+                align-items: center !important;
             }
             
             .debug-grid-compact {

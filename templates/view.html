@@ -347,11 +347,6 @@ function atualizarInsights(stats) {
             ${stats.total_atletas} atletas analisados
         </div>
         <div>
-            <strong style="color: #fff;">Zona de risco à saúde:</strong><br>
-            IMC > 25.0: ${stats.imc_alto} atletas<br>
-            Requer acompanhamento nutricional
-        </div>
-        <div>
             <strong style="color: #fff;">Recomendações gerais:</strong><br>
             Elite: manutenção + especialização<br>
             Competitivo: força máxima + técnica<br>
@@ -364,8 +359,19 @@ function gerarRelatorio() {
     alert('Funcionalidade em desenvolvimento: Gerar relatório PDF');
 }
 
-function exportarDados() {
-    alert('Funcionalidade em desenvolvimento: Exportar para CSV/Excel');
+async function exportarDados() {
+    try {
+        const data = await fetch('/exportData', {
+            method: 'GET'})
+        if (!data.ok) {
+            throw new Error('Erro ao exportar dados');
+        } else {
+            alert('Dados exportados com sucesso!');
+        }
+    } catch (error) {
+        console.error('Erro:', error);
+        alert('Erro de conexão. Por favor, verifique sua internet e tente novamente.');
+    }
 }
 </script>
 

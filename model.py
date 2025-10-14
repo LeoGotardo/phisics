@@ -2,8 +2,9 @@ from flask_sqlalchemy import SQLAlchemy
 from flask_login import UserMixin
 from dotenv import load_dotenv
 from flask import Flask
+from dataGen import generateData
 
-import locale, sys, os, uuid
+import locale, sys, os, uuid, pandas as pd
 
 
 class Config:
@@ -29,9 +30,10 @@ class Athlete(UserMixin, Config.db.Model):
     arremesso = Config.db.Column(Config.db.Float, nullable=False)
     salto_horizontal = Config.db.Column(Config.db.Float, nullable=False)
     abdominais = Config.db.Column(Config.db.Float, nullable=False)
+    cluster = Config.db.Column(Config.db.Integer, nullable=False)
     
     
-    def __init__(self, nome, data_nascimento, sexo, massa_corporal, estatura, envergadura, arremesso, salto_horizontal, abdominais):
+    def __init__(self, nome, data_nascimento, sexo, massa_corporal, estatura, envergadura, arremesso, salto_horizontal, abdominais) -> None:
         self.nome = nome
         self.data_nascimento = data_nascimento
         self.sexo = sexo
@@ -42,7 +44,7 @@ class Athlete(UserMixin, Config.db.Model):
         self.salto_horizontal = salto_horizontal
         self.abdominais = abdominais
         
-    def dict(self):
+    def dict(self) -> dict:
         return {
             'id': self.id,
             'nome': self.nome,
@@ -53,19 +55,41 @@ class Athlete(UserMixin, Config.db.Model):
             'envergadura': self.envergadura,
             'arremesso': self.arremesso,
             'salto_horizontal': self.salto_horizontal,
-            'abdominais': self.abdominais
+            'abdominais': self.abdominais,
+            'cluster': self.cluster
         }
         
         
 class Model:
-    def __init__(self):
+    def __init__(self) -> None:
         self.db = Config.db
         self.session = Config.session
         
         self.create_tables()
+        athlete = self.session.query(Athlete).first()
+        if not athlete:
+            self.seedData()
+            
+            
+    def seedData(self) -> None:
+        try:
+            data: list = pd.read_csv('dataset.csv').to_dict('records')
+        except FileNotFoundError:
+            data = generateData()
+        
+        try:    
+            with Config.app.app_context():
+                for item in data:
+                    athlete = Athlete(**item)
+                    self.session.add(athlete)
+                self.session.commit()
+        except Exception as e:
+            self.session.rollback()
+            raise e
+            
         
         
-    def create_tables(self):
+    def create_tables(self) -> None:
         with Config.app.app_context():
             self.db.create_all()
         
@@ -86,9 +110,22 @@ class Model:
             except Exception as e:
                 self.session.rollback()
                 raise e
+            
+            
+    def getDashboardInfo(self) -> tuple[bool, dict]:
+        with Config.app.app_context():
+            try:
+                totalAthlets = self.session.query(Athlete).count()
+                
+                return True, {
+                    'totalAthlets': totalAthlets,
+                }
+            except Exception as e:
+                self.session.rollback()
+                raise e
     
     
-    def getAthletes(self,  sort: str = 'id', sortOrder: str = 'desc', query: str = None, paginated: bool = False, page: int = 1, per_page: int = 10) -> tuple[bool, list[Athlete]]:
+    def getAthletes(self, sort: str = 'id', sortOrder: str = 'desc', query: str = None, paginated: bool = False, page: int = 1, per_page: int = 10) -> tuple[bool, list[Athlete]] | tuple[bool, dict]:
         
         sortOptions = {
             'name': Athlete.nome,
