@@ -1,9 +1,9 @@
-import locale, sys, os, uuid
-
 from flask_sqlalchemy import SQLAlchemy
 from flask_login import UserMixin
 from dotenv import load_dotenv
 from flask import Flask
+
+import locale, sys, os, uuid
 
 
 class Config:

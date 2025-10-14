@@ -12,10 +12,8 @@ from sklearn.preprocessing import StandardScaler
 from sklearn.decomposition import PCA
 from sklearn.cluster import KMeans
 from model import Model
-import pickle as pkl
-import pandas as pd
-import numpy as np
-import sys
+
+import pickle as pkl, pandas as pd, numpy as np, sys
 
 
 class Controller:
