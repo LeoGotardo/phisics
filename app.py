@@ -1,9 +1,3 @@
-"""
-TODO:
-    - Arrumar tabela de dados no analise.html
-"""
-
-
 from flask import Flask, render_template, request, redirect, url_for, flash, Blueprint, send_file
 from controller import Controller
 from model import Config

@@ -1,13 +1,3 @@
-"""
-TODO:
-    - Setup Kmeans
-    - Criar cluster
-    - Criar modelo
-    - Carregar dados
-    - Analisar dados
-    - Criar cadeia de responsavilidades
-"""
-
 from sklearn.preprocessing import StandardScaler
 from sklearn.decomposition import PCA
 from sklearn.cluster import KMeans
