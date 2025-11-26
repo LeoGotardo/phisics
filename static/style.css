@@ -12,7 +12,6 @@ body {
 }
 
 .container {
-    max-width: 1400px;
     margin: 0 auto;
 }
 
@@ -36,7 +35,7 @@ nav {
     padding: 0 40px;
 }
 
-nav button {
+nav a {
     padding: 16px 24px;
     background: transparent;
     border: none;
@@ -45,19 +44,19 @@ nav button {
     cursor: pointer;
     transition: all 0.2s;
     border-bottom: 2px solid transparent;
+    text-decoration: none;
 }
 
-nav button:hover {
+nav a:hover {
     color: #e0e0e0;
 }
 
-nav button.active {
+nav a.active {
     color: #fff;
     border-bottom-color: #4a9eff;
 }
 
 .screen {
-    display: none;
     padding: 40px;
 }
 

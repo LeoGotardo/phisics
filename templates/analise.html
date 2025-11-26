@@ -1,7 +1,7 @@
 {% extends "base.html" %}
 
 {% block content %}
-{% super() %}
+{{ super() }}
 <!-- ANÁLISE -->
 <div id="analise" class="screen">
     <div class="filters">
@@ -59,40 +59,53 @@
 {% endblock %}
 
 {% block scripts %}
-{% super() %}
+{{ super() }}
 <script>
-    function exportPDF() {
-        const data = {
-            athletes: {{ athletes | tojson | safe }},
-            filters: {
-                query: {{ request.args.get('query') | tojson | safe }},
-                sort: {{ request.args.get('sort') | tojson | safe }},
-                sortOrder: {{ request.args.get('sortOrder') | tojson | safe }}
-            }
-        };
+function exportPDF() {
+    const data = {
+        athletes: {{ athletes | tojson | safe }},
+        filters: {
+            query: {{ request.args.get('query') | tojson | safe }},
+            sort: {{ request.args.get('sort') | tojson | safe }},
+            sortOrder: {{ request.args.get('sortOrder') | tojson | safe }}
+        }
+    };
 
-        const pdf = document.getElementById('pdf');
-        pdf.src = `/static/pdf/analise.pdf?${new URLSearchParams(data).toString()}`;
-    }
+    const pdf = document.getElementById('pdf');
+    pdf.src = `/static/pdf/analise.pdf?${new URLSearchParams(data).toString()}`;
+}
 
-    function exportExcel() {
-        const data = {
-            athletes: {{ athletes | tojson | safe }},
-            filters: {
-                query: {{ request.args.get('query') | tojson | safe }},
-                sort: {{ request.args.get('sort') | tojson | safe }},
-                sortOrder: {{ request.args.get('sortOrder') | tojson | safe }}
-            }
-        };
+function exportExcel() {
+    const data = {
+        athletes: {{ athletes | tojson | safe }},
+        filters: {
+            query: {{ request.args.get('query') | tojson | safe }},
+            sort: {{ request.args.get('sort') | tojson | safe }},
+            sortOrder: {{ request.args.get('sortOrder') | tojson | safe }}
+        }
+    };
 
-        const blob = new Blob([JSON.stringify(data)], { type: 'application/json' });
-        const url = URL.createObjectURL(blob);
+    const blob = new Blob([JSON.stringify(data)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
 
-        const link = document.createElement('a');
-        link.href = url;
-        link.download = 'analise.json';
-        link.click();
-    }
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = 'analise.json';
+    link.click();
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+  const navItem = document.querySelector('.review-nav');
+  const activeNavItem = document.querySelector('.nav-btn.active');
+  
+  if (navItem) {
+    navItem.classList.add('active');
+  }
+  
+  if (activeNavItem) {
+    activeNavItem.classList.remove('active');
+  }
+});
     
 </script>
 {% endblock %}

@@ -1,15 +1,14 @@
-classDiagram
-    class Controller {
-        +setupKMeans(n_clusters: int)
-        +loadCSVData(file: bytes)
-        +getDashboardInfo()
-        +getViewInfo()
-        +getAthlets(filter: dict)
-        +putAthlete(dados: dict)
-        +putAthlete(dados: dict)
-        +getCluster(clusterId: str)
-        +getModelQuality()
-        +getModelMetrics()
-        +createCluster(dados: dict)
-        +getClusterInfo(clusterId: str)
+classDiagram{
+    class Controller{
+        +renderViewPage()
+        +renderDashboard()
+        +renderAnalisePage()
+        +renderPutPage()
+        +renderErrorPage()
+        +sendAthlete()
+        +sendCSV()
+        +getKnnMetrics()
+        +getCSV()
+        +startApp()
     }
+}

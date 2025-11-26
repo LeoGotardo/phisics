@@ -1,4 +1,7 @@
-{% extends "base.html" %} {% block content %} {% super() %}
+{% extends "base.html" %} 
+
+{% block content %} 
+{{ super() }}
 
 <!-- CADASTRO -->
 <div id="cadastro" class="screen">
@@ -73,7 +76,10 @@
     Carregar Dados
   </button>
 </div>
-{% endblock %} {% block scripts %} {% super() %}
+{% endblock %} 
+
+{% block scripts %} 
+{{ super() }}
 
 <script>
   function loadCSV() {
@@ -234,5 +240,17 @@
   });
 }
 
+document.addEventListener('DOMContentLoaded', function() {
+  const navItem = document.querySelector('.cadastro-nav');
+  const activeNavItem = document.querySelector('.nav-btn.active');
+  
+  if (navItem) {
+    navItem.classList.add('active');
+  }
+  
+  if (activeNavItem) {
+    activeNavItem.classList.remove('active');
+  }
+});
 </script>
 {% endblock %}

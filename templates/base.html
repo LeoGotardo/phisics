@@ -19,31 +19,15 @@
         </header>
 
         <nav>
-            <button class="nav-btn active" data-screen="dashboard">Dashboard</button>
-            <button class="nav-btn" data-screen="cadastro">Cadastro</button>
-            <button class="nav-btn" data-screen="analise">Análise</button>
-            <button class="nav-btn" data-screen="visualizacao">Visualização</button>
+            <a class="nav-btn active dashboard-nav" href="{{ url_for('renderDashboard') }}">Dashboard</a>
+            <a class="nav-btn cadastro-nav" href="{{ url_for('renderCadastro') }}">Cadastro</a>
+            <a class="nav-btn review-nav" href="{{ url_for('renderReview') }}">Análise</a>
+            <a class="nav-btn view-nav" href="{{ url_for('renderViewPage') }}">Visualização</a>
         </nav>
     </div>
     {% endblock %}
 
     {% block scripts %}
-    <script>
-        const navButtons = document.querySelectorAll('.nav-btn');
-        const screens = document.querySelectorAll('.screen');
-
-        navButtons.forEach(button => {
-            button.addEventListener('click', () => {
-                const targetScreen = button.dataset.screen;
-                
-                navButtons.forEach(btn => btn.classList.remove('active'));
-                screens.forEach(screen => screen.classList.remove('active'));
-                
-                button.classList.add('active');
-                document.getElementById(targetScreen).classList.add('active');
-            });
-        });
-    </script>
     {% endblock %}
 </body>
 {% endblock %}

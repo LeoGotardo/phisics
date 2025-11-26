@@ -1,7 +1,7 @@
 {% extends "base.html" %}
 
 {% block content %}
-{% super() %}
+{{ super() }}
 
 <!-- CDN do Chart.js -->
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
@@ -373,6 +373,19 @@ async function exportarDados() {
         alert('Erro de conexão. Por favor, verifique sua internet e tente novamente.');
     }
 }
+
+document.addEventListener('DOMContentLoaded', function() {
+  const navItem = document.querySelector('.view-nav');
+  const activeNavItem = document.querySelector('.nav-btn.active');
+  
+  if (navItem) {
+    navItem.classList.add('active');
+  }
+  
+  if (activeNavItem) {
+    activeNavItem.classList.remove('active');
+  }
+});
 </script>
 
 <style>

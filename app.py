@@ -9,7 +9,8 @@ import traceback, sys, json
 class View:
     def __init__(self, app):
         self.app: Flask = app
-        self.controller = Controller()
+        self.controller = Controller(Config.app)
+        self.controller = Controller(self.app)
         self.blueprint = Blueprint('view', __name__, template_folder='templates')
         
         self.app.register_blueprint(self.blueprint)
@@ -78,14 +79,14 @@ class View:
         if status == True:
             return render_template('dashboard.html')
         if status == -1:
-            return render_template('errorPage.html', **info)
+            raise Exception(info)
         
         
     def loadCSVData(self):
         if request.method == 'POST':
             status, response = self.controller.loadCSVData(request.files['csvFile'])
             if status == -1:
-                return render_template('errorPage.html', **response)
+                raise Exception(response)
             if status == True:
                 flash(response, category='success')
             else:
@@ -101,7 +102,7 @@ class View:
             if status == True:
                 return send_file(BytesIO(info), as_attachment=True, attachment_filename='data.csv')
             if status == -1:
-                return render_template('errorPage.html', **info)
+                raise Exception(info)
             else:
                 flash(info, category='error')
                 return render_template('exportData.html')
@@ -114,7 +115,7 @@ class View:
             case 'POST':
                 status, response = self.controller.putAthlete(request.form)
                 if status == -1:
-                    return render_template('errorPage.html', **response)
+                    raise Exception(response)
                 if status == True:
                     flash(response, category='success')
                 else:
@@ -131,7 +132,7 @@ class View:
             case 'POST':
                 status, response = self.controller.getAthlets(request.form)
                 if status == -1:
-                    return render_template('errorPage.html', **response)
+                    raise Exception(response)
                 if status == True:
                     flash(response, category='success')
                 else:
@@ -146,9 +147,9 @@ class View:
     def viewPage(self):
         status, info = self.controller.getViewInfo()
         if status == True:
-            return render_template('view.html', **info)
+            return render_template('view.html', info)
         if status == -1:
-            return render_template('errorPage.html', **info)
+            raise Exception(info)
         else:
             flash(info, category='error')
             return render_template('view.html')

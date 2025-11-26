@@ -419,7 +419,7 @@
                             <div class="value">175</div>
                         </div>
                         <div class="stat">
-                            <div class="label">Medicine</div>
+                            <div class="label">arremesso</div>
                             <div class="value">485</div>
                         </div>
                         <div class="stat">
@@ -446,7 +446,7 @@
                             <div class="value">166</div>
                         </div>
                         <div class="stat">
-                            <div class="label">Medicine</div>
+                            <div class="label">arremesso</div>
                             <div class="value">372</div>
                         </div>
                         <div class="stat">
@@ -472,7 +472,7 @@
                             <div class="value">158</div>
                         </div>
                         <div class="stat">
-                            <div class="label">Medicine</div>
+                            <div class="label">arremesso</div>
                             <div class="value">298</div>
                         </div>
                         <div class="stat">
@@ -499,7 +499,7 @@
                             <div class="value">151</div>
                         </div>
                         <div class="stat">
-                            <div class="label">Medicine</div>
+                            <div class="label">arremesso</div>
                             <div class="value">215</div>
                         </div>
                         <div class="stat">
@@ -544,10 +544,6 @@
                     <h3>Antropometria</h3>
                     <div class="form-grid">
                         <div class="form-group">
-                            <label>Massa Corporal (kg)</label>
-                            <input type="number" id="massaCorporal" step="0.1" required>
-                        </div>
-                        <div class="form-group">
                             <label>Estatura (cm)</label>
                             <input type="number" id="estatura" step="0.1" required>
                         </div>
@@ -563,7 +559,7 @@
                     <div class="form-grid">
                         <div class="form-group">
                             <label>Arremesso (cm)</label>
-                            <input type="number" id="medicineBall" step="0.1" required>
+                            <input type="number" id="arremessoBall" step="0.1" required>
                         </div>
                         <div class="form-group">
                             <label>Salto Horizontal (cm)</label>
@@ -606,7 +602,7 @@
                     <div>Nome</div>
                     <div>Altura</div>
                     <div>Envergadura</div>
-                    <div>Medicine</div>
+                    <div>Arremesso</div>
                     <div>Salto</div>
                     <div>Abdom</div>
                     <div>Score</div>
@@ -791,36 +787,6 @@
                 </div>
             </div>
 
-            <div style="background: #111; border: 1px solid #222; border-radius: 8px; padding: 24px; margin-top: 16px;">
-                <h3 style="font-size: 1em; color: #fff; margin-bottom: 16px;">Insights Estatísticos</h3>
-                <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 16px; font-size: 0.9em; color: #aaa; line-height: 1.8;">
-                    <div>
-                        <strong style="color: #fff;">Preditores mais importantes:</strong><br>
-                        1. Arremesso (35% do peso)<br>
-                        2. Salto Horizontal (35%)<br>
-                        3. Abdominais (25%)
-                    </div>
-                    <div>
-                        <strong style="color: #fff;">Taxas de transição:</strong><br>
-                        Iniciante → Intermediário: 6-12 meses<br>
-                        Intermediário → Competitivo: 12-24 meses<br>
-                        Competitivo → Elite: 24-36 meses
-                    </div>
-                    <div>
-                        <strong style="color: #fff;">Zona de risco à saúde:</strong><br>
-                        IMC &gt; 25.0: 8 atletas (5.1%)<br>
-                        RCE &gt; 0.50: 12 atletas (7.7%)<br>
-                        Requer acompanhamento nutricional
-                    </div>
-                    <div>
-                        <strong style="color: #fff;">Recomendações gerais:</strong><br>
-                        Elite: manutenção + especialização<br>
-                        Competitivo: força máxima + técnica<br>
-                        Intermediário/Iniciante: base + volume
-                    </div>
-                </div>
-            </div>
-
             <div class="actions">
                 <button class="btn btn-primary">Gerar Relatório Completo</button>
                 <button class="btn btn-secondary">Exportar Dados</button>
@@ -851,12 +817,12 @@
             
             const data = {
                 nome: document.getElementById('nome').value,
-                medicineBall: parseFloat(document.getElementById('medicineBall').value),
+                arremessoBall: parseFloat(document.getElementById('arremessoBall').value),
                 saltoHorizontal: parseFloat(document.getElementById('saltoHorizontal').value),
                 abdominais: parseInt(document.getElementById('abdominais').value)
             };
 
-            const score = (data.medicineBall * 0.35 + data.saltoHorizontal * 0.35 + data.abdominais * 0.30).toFixed(1);
+            const score = (data.arremessoBall * 0.35 + data.saltoHorizontal * 0.35 + data.abdominais * 0.30).toFixed(1);
             
             let cluster = score >= 250 ? 'Elite' : score >= 200 ? 'Competitivo' : score >= 150 ? 'Intermediário' : 'Iniciante';
 
