@@ -1,6 +1,6 @@
 from flask import Flask, render_template, request, redirect, url_for, flash, Blueprint, send_file
-from controller import Controller
-from model import Config
+from controller.controller import Controller
+from models.model import Config
 from io import BytesIO
 
 import traceback, sys, json

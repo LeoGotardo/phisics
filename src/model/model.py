@@ -4,63 +4,15 @@ from sklearn.metrics import silhouette_score, davies_bouldin_score, silhouette_s
 from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Image, PageBreak
 from sklearn.preprocessing import StandardScaler
 from reportlab.lib.pagesizes import letter, A4
-from flask_sqlalchemy import SQLAlchemy
 from sklearn.decomposition import PCA
-from reportlab.lib import colors
 from sklearn.cluster import KMeans
-from flask_login import UserMixin
+from reportlab.lib import colors
 from sqlalchemy import func
 from typing import Literal
-from flask import Flask
 
+from models.athleteModel import Athlete
+from config import Config
 
-class Config:
-    locale.setlocale(locale.LC_TIME, 'pt_BR.UTF-8')
-    SECRET_KEY = "secret_key"
-    app = Flask(__name__)
-    app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///database.db'
-    app.config['SECRET_KEY'] = SECRET_KEY
-    db = SQLAlchemy(app)
-    session = db.session
-    
-    
-class Athlete(UserMixin, Config.db.Model):
-    __tablename__ = 'athletes'
-    id = Config.db.Column(Config.db.String(32), primary_key=True, default=str(uuid.uuid4()))
-    nome = Config.db.Column(Config.db.String(50), nullable=False)
-    data_nascimento = Config.db.Column(Config.db.Date, nullable=False)
-    sexo = Config.db.Column(Config.db.String(10), nullable=False)
-    estatura = Config.db.Column(Config.db.Float, nullable=False)
-    envergadura = Config.db.Column(Config.db.Float, nullable=False)
-    arremesso = Config.db.Column(Config.db.Float, nullable=False)
-    salto_horizontal = Config.db.Column(Config.db.Float, nullable=False)
-    abdominais = Config.db.Column(Config.db.Float, nullable=False)
-    cluster = Config.db.Column(Config.db.Integer, nullable=False)
-    
-    
-    def __init__(self, nome, data_nascimento, sexo, estatura, envergadura, arremesso, salto_horizontal, abdominais) -> None:
-        self.nome = nome
-        self.data_nascimento = data_nascimento
-        self.sexo = sexo
-        self.estatura = estatura
-        self.envergadura = envergadura
-        self.arremesso = arremesso
-        self.salto_horizontal = salto_horizontal
-        self.abdominais = abdominais
-        
-    def dict(self) -> dict:
-        return {
-            'id': self.id,
-            'nome': self.nome,
-            'data_nascimento': self.data_nascimento,
-            'sexo': self.sexo,
-            'estatura': self.estatura,
-            'envergadura': self.envergadura,
-            'arremesso': self.arremesso,
-            'salto_horizontal': self.salto_horizontal,
-            'abdominais': self.abdominais,
-        }
-        
         
 class Model:
     def __init__(self):
