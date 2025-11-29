@@ -10,7 +10,7 @@ from reportlab.lib import colors
 from sqlalchemy import func
 from typing import Literal
 
-from models.athleteModel import Athlete
+from athleteModel import Athlete
 from config import Config
 
         

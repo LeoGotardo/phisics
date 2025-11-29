@@ -1,16 +1,17 @@
 from flask import Flask, render_template, request, redirect, url_for, flash, Blueprint, send_file
-from controller.controller import Controller
-from models.model import Config
+from model.model import Model
 from io import BytesIO
+
+from model.model import Model
+from config import Config
 
 import traceback, sys, json
 
 
-class View:
+class Controller:
     def __init__(self, app):
         self.app: Flask = app
-        self.controller = Controller(Config.app)
-        self.controller = Controller(self.app)
+        self.model = Model()
         self.blueprint = Blueprint('view', __name__, template_folder='templates')
         
         self.app.register_blueprint(self.blueprint)
@@ -75,7 +76,7 @@ class View:
     
     
     def index(self):
-        status, info = self.controller.getDashboardInfo()
+        status, info = self.model.getDashboardInfo()
         if status == True:
             return render_template('dashboard.html')
         if status == -1:
@@ -84,7 +85,7 @@ class View:
         
     def loadCSVData(self):
         if request.method == 'POST':
-            status, response = self.controller.loadCSVData(request.files['csvFile'])
+            status, response = self.model.loadCSVData(request.files['csvFile'])
             if status == -1:
                 raise Exception(response)
             if status == True:
@@ -98,7 +99,7 @@ class View:
     
     def exportData(self):
         if request.method == 'GET':
-            status, info = self.controller.exportData()
+            status, info = self.model.exportData()
             if status == True:
                 return send_file(BytesIO(info), as_attachment=True, attachment_filename='data.csv')
             if status == -1:
@@ -113,7 +114,7 @@ class View:
     def createAthlete(self):
         match request.method:
             case 'POST':
-                status, response = self.controller.putAthlete(request.form)
+                status, response = self.model.putAthlete(request.form)
                 if status == -1:
                     raise Exception(response)
                 if status == True:
@@ -130,7 +131,7 @@ class View:
     def review(self):
         match request.method:
             case 'POST':
-                status, response = self.controller.getAthlets(request.form)
+                status, response = self.model.getAthlets(request.form)
                 if status == -1:
                     raise Exception(response)
                 if status == True:
@@ -145,7 +146,7 @@ class View:
 
 
     def viewPage(self):
-        status, info = self.controller.getViewInfo()
+        status, info = self.model.getViewInfo()
         if status == True:
             return render_template('view.html', info)
         if status == -1:
@@ -156,4 +157,4 @@ class View:
         
         
 if __name__ == '__main__':
-    View(Config.app)
+    Controller(Config.app)

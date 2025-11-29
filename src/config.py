@@ -14,3 +14,4 @@ class Config:
     app.config['SECRET_KEY'] = SECRET_KEY
     db = SQLAlchemy(app)
     session = db.session
+    COLUMNS = ['nome', 'data_nascimento','sexo', 'altura', 'envergadura', 'arremesso', 'salto_horizontal', 'abdominais']
