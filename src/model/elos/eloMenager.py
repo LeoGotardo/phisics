@@ -28,6 +28,7 @@ class EloManager:
         Returns:
             O resultado final da cadeia
         """
+        
         self.result = initial_value
         self.current_index = 0
         self.history = [initial_value]
@@ -39,8 +40,7 @@ class EloManager:
                 self.nextNode()
             except Exception as e:
                 self.error = e
-                print(f"Erro na execução do nó {self.current_index}: {e}")
-                break
+                raise(e)
         
         return self.returnResult()
     
@@ -52,23 +52,19 @@ class EloManager:
         Returns:
             O resultado da função executada
         """
+        
         if self.isDone():
             return self.result
         
-        # Pega a função atual
         current_func = self.chain[self.current_index]
         
         try:
-            # Executa a função passando o resultado anterior
             self.result = current_func(self.result)
             
-            # Salva no histórico
             self.history.append(self.result)
             
-            # Avança para o próximo nó
             self.current_index += 1
             
-            # Verifica se terminou
             if self.current_index >= len(self.chain):
                 self.is_completed = True
             
@@ -87,6 +83,7 @@ class EloManager:
         Returns:
             True se completou, False caso contrário
         """
+        
         return self.current_index >= len(self.chain) or self.is_completed
     
     
@@ -97,6 +94,7 @@ class EloManager:
         Returns:
             O resultado da última função executada
         """
+        
         return self.result
     
     
@@ -107,11 +105,13 @@ class EloManager:
         Returns:
             Lista com todos os resultados (incluindo inicial e intermediários)
         """
+        
         return self.history
     
     
     def reset(self):
         """Reseta o manager para executar novamente"""
+        
         self.current_index = 0
         self.result = None
         self.history = []
@@ -121,9 +121,11 @@ class EloManager:
     
     def getCurrentStep(self) -> int:
         """Retorna o índice do passo atual"""
+        
         return self.current_index
     
     
     def hasError(self) -> bool:
         """Verifica se houve erro na execução"""
+        
         return self.error is not None
