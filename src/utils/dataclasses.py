@@ -1,5 +1,7 @@
+from src.model.elos.eloManager import EloManager
 from typing import Callable, Any, Literal
 from dataclasses import dataclass, field
+
 
 
 @dataclass
@@ -41,6 +43,15 @@ class Elo:
         if func in self.chain:
             self.chain.remove(func)
         return self
+    
+    
+    def startFrom(self, func: Callable, *args, **kwargs) -> any:
+        """Inicia a cadeia a partir de uma função específica"""
+        for i, func in enumerate(self.chain):
+            if func == func:
+                self.chain = self.chain[i:]
+        
+        return EloManager(self).startElo(*args, **kwargs)
 
 
 @dataclass
@@ -90,7 +101,7 @@ class Column:
     
     
     @classmethod
-    def fromDict(cls, data: dict) -> 'Columns':
+    def fromDict(cls, data: dict) -> 'Column':
         """Cria uma instância a partir de um dicionário"""
         
         return cls(

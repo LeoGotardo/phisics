@@ -8,36 +8,36 @@ class Athlete(UserMixin, Config.db.Model):
     __tablename__ = 'athletes'
     id = Config.db.Column(Config.db.String(32), primary_key=True, default=str(uuid.uuid4()))
     nome = Config.db.Column(Config.db.String(50), nullable=False)
-    data_nascimento = Config.db.Column(Config.db.Date, nullable=False)
+    dataNascimento = Config.db.Column(Config.db.Date, nullable=False)
     sexo = Config.db.Column(Config.db.String(10), nullable=False)
-    estatura = Config.db.Column(Config.db.Float, nullable=False)
+    altura = Config.db.Column(Config.db.Float, nullable=False)
     envergadura = Config.db.Column(Config.db.Float, nullable=False)
     arremesso = Config.db.Column(Config.db.Float, nullable=False)
-    salto_horizontal = Config.db.Column(Config.db.Float, nullable=False)
+    saltoHorizontal = Config.db.Column(Config.db.Float, nullable=False)
     abdominais = Config.db.Column(Config.db.Float, nullable=False)
     cluster = Config.db.Column(Config.db.Integer, nullable=False)
     
     
-    def __init__(self, nome, data_nascimento, sexo, estatura, envergadura, arremesso, salto_horizontal, abdominais) -> None:
+    def __init__(self, nome, dataNascimento, sexo, altura, envergadura, arremesso, saltoHorizontal, abdominais) -> None:
         self.nome = nome
-        self.data_nascimento = data_nascimento
+        self.dataNascimento = dataNascimento
         self.sexo = sexo
-        self.estatura = estatura
+        self.altura = altura
         self.envergadura = envergadura
         self.arremesso = arremesso
-        self.salto_horizontal = salto_horizontal
+        self.saltoHorizontal = saltoHorizontal
         self.abdominais = abdominais
         
     def dict(self) -> dict:
         return {
             'id': self.id,
             'nome': self.nome,
-            'data_nascimento': self.data_nascimento,
+            'dataNascimento': self.dataNascimento,
             'sexo': self.sexo,
-            'estatura': self.estatura,
+            'altura': self.altura,
             'envergadura': self.envergadura,
             'arremesso': self.arremesso,
-            'salto_horizontal': self.salto_horizontal,
+            'saltoHorizontal': self.saltoHorizontal,
             'abdominais': self.abdominais,
         }
         
