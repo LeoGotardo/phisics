@@ -1,8 +1,9 @@
-import  sys, sys
+import  sys, sys, pandas as pd
 
+from src.model.elos.eloManager import EloManager
+from typing import Tuple, List, Dict, Literal
 from elos.csvImportElo import CSVImportElo
 from elos.csvExportElo import CSVExportElo
-from src.model.elos.eloManager import EloManager
 from athleteModel import Athlete
 from knnModel import KNNModel
 from sqlalchemy import func
@@ -13,7 +14,14 @@ class Model:
     def __init__(self):
         self.db = Config.db
         self.session = Config.session
-        self.knnModel = KNNModel()
+        self.knnModel = KNNModel(nNeighbors=5)
+        
+        # Tentar carregar modelo salvo
+        status, msg = self.knnModel.loadModel('models/knn_model.pkl')
+        if status:
+            print(f"✓ {msg}")
+        else:
+            print(f"⚠ Modelo não carregado, será necessário treinar: {msg}")
         
         self.create_tables()
         
@@ -46,40 +54,263 @@ class Model:
             return -1, str(f'{type(e).__name__}: {e} in line {sys.exc_info()[-1].tb_lineno} in file {sys.exc_info()[-1].tb_frame.f_code.co_filename}')
         
         return True, csvFile
-    
-    
-    def classifyAthletes(self, athletes: list[Athlete | dict]) -> tuple[bool, list[dict]]:
-        try:
-            for athlete in athletes:
-                if isinstance(athlete, dict):
-                    athlete = Athlete(**athlete)
-                    
-                athlete.cluster = self.KNNModel.predict(athlete)
+ 
+ 
+    def trainKNNModel(self, forceRetrain: bool = False) -> Tuple[bool, str]:
+        """
+        Treina o modelo KNN com todos os atletas do banco.
+        
+        Args:
+            forceRetrain: Se True, retreina mesmo se já estiver treinado
             
-            success = self.createAthletes(athletes, rowData=False)
-        except Exception as e:            
-            return -1, str(f'{type(e).__name__}: {e} in line {sys.exc_info()[-1].tb_lineno} in file {sys.exc_info()[-1].tb_frame.f_code.co_filename}')
-        
-        return True, 
-    
-        
-        
-    def setupKNNModel(self) -> tuple[bool, str]:
+        Returns:
+            Tupla (sucesso, mensagem)
+        """
         try:
-            self.knnModel.trainModel()
-            return True, "KNN Model treinado com sucesso!"
+            if self.knnModel.isTrained and not forceRetrain:
+                return True, "Modelo já está treinado. Use forceRetrain=True para retreinar."
+            
+            # Buscar todos os atletas do banco
+            athletes = self.session.query(Athlete).all()
+            
+            if len(athletes) < 20:
+                return False, f"Necessário pelo menos 20 atletas para treinar. Encontrados: {len(athletes)}"
+            
+            # Converter para DataFrame
+            athletesData = [athlete.dict() for athlete in athletes]
+            dfAthletes = pd.DataFrame(athletesData)
+            
+            # Treinar modelo
+            status, msg = self.knnModel.fit(dfAthletes)
+            
+            if status:
+                # Salvar modelo
+                self.knnModel.saveModel('models/knn_model.pkl')
+                return True, msg
+            else:
+                return False, msg
+                
         except Exception as e:
-            return -1, str(f'{type(e).__name__}: {e} in line {sys.exc_info()[-1].tb_lineno} in file {sys.exc_info()[-1].tb_frame.f_code.co_filename}')
-        
+            return -1, f'{type(e).__name__}: {e} in line {sys.exc_info()[-1].tb_lineno}'
     
-    def classifyAthlete(self, athleteData: dict | Athlete) -> tuple[bool, str]:
+    
+    def classifyAthlete(self, athleteData: Dict | Athlete) -> Tuple[bool, Dict | str]:
+        """
+        Classifica um atleta usando o modelo KNN.
+        
+        Args:
+            athleteData: Dados do atleta (dict ou objeto Athlete)
+            
+        Returns:
+            Tupla (sucesso, resultado)
+        """
         try:
+            # Verificar se modelo está treinado
+            if not self.knnModel.isTrained:
+                return False, "Modelo KNN não foi treinado. Execute trainKNNModel() primeiro."
+            
+            # Converter Athlete para dict se necessário
             if isinstance(athleteData, Athlete):
-                athleteData = athleteData.dict().pop('cluster')
-            cluster = self.knnModel.classifyAthlete(athleteData)
-            return True, cluster
+                athleteData = athleteData.dict()
+            
+            # Fazer predição
+            status, resultado = self.knnModel.predict(athleteData)
+            
+            return status, resultado
+            
         except Exception as e:
-            return -1, str(f'{type(e).__name__}: {e} in line {sys.exc_info()[-1].tb_lineno} in file {sys.exc_info()[-1].tb_frame.f_code.co_filename}')
+            return -1, f'{type(e).__name__}: {e} in line {sys.exc_info()[-1].tb_lineno}'
+    
+    
+    def classifyAthletes(self, athletesList: List[Athlete | Dict]) -> Tuple[bool, List[Dict] | str]:
+        """
+        Classifica múltiplos atletas e atualiza no banco.
+        
+        Args:
+            athletesList: Lista de atletas para classificar
+            
+        Returns:
+            Tupla (sucesso, resultados)
+        """
+        try:
+            if not self.knnModel.isTrained:
+                # Tentar treinar automaticamente
+                trainStatus, trainMsg = self.trainKNNModel()
+                if not trainStatus:
+                    return False, f"Não foi possível treinar o modelo: {trainMsg}"
+            
+            results = []
+            
+            for athlete in athletesList:
+                # Converter para dict se necessário
+                if isinstance(athlete, Athlete):
+                    athleteDict = athlete.dict()
+                    athleteObj = athlete
+                else:
+                    athleteDict = athlete
+                    athleteObj = Athlete(**athlete)
+                
+                # Classificar
+                status, resultado = self.knnModel.predict(athleteDict)
+                
+                if status:
+                    # Atualizar cluster do atleta
+                    athleteObj.cluster = resultado['cluster']
+                    
+                    # Adicionar ao banco se ainda não estiver
+                    existing = self.session.query(Athlete).filter_by(id=athleteObj.id).first()
+                    if not existing:
+                        self.session.add(athleteObj)
+                    else:
+                        existing.cluster = resultado['cluster']
+                    
+                    results.append({
+                        'nome': athleteObj.nome,
+                        'cluster': resultado['cluster'],
+                        'confianca': resultado['confianca']
+                    })
+            
+            # Commit das alterações
+            self.session.commit()
+            
+            return True, results
+            
+        except Exception as e:
+            self.session.rollback()
+            return -1, f'{type(e).__name__}: {e} in line {sys.exc_info()[-1].tb_lineno}'
+    
+    
+    def findSimilarAthletes(self, athleteId: str, nSimilar: int = 5) -> Tuple[bool, List[Dict] | str]:
+        """
+        Encontra atletas similares a um atleta específico.
+        
+        Args:
+            athleteId: ID do atleta de referência
+            nSimilar: Número de atletas similares a retornar
+            
+        Returns:
+            Tupla (sucesso, lista de atletas similares)
+        """
+        try:
+            # Buscar atleta
+            athlete = self.session.query(Athlete).filter_by(id=athleteId).first()
+            
+            if not athlete:
+                return False, f"Atleta com ID {athleteId} não encontrado"
+            
+            # Buscar similares
+            status, similares = self.knnModel.findSimilarAthletes(
+                athlete.dict(),
+                nSimilar=nSimilar
+            )
+            
+            if not status:
+                return False, similares
+            
+            # Buscar dados completos dos atletas similares
+            allAthletes = self.session.query(Athlete).all()
+            
+            similaresCompletos = []
+            for similar in similares:
+                idx = similar['indice']
+                if idx < len(allAthletes):
+                    athleteSimilar = allAthletes[idx]
+                    similaresCompletos.append({
+                        'nome': athleteSimilar.nome,
+                        'cluster': athleteSimilar.cluster,
+                        'similaridade': similar['similaridade'],
+                        'distancia': similar['distancia'],
+                        'dados': athleteSimilar.dict()
+                    })
+            
+            return True, similaresCompletos
+            
+        except Exception as e:
+            return -1, f'{type(e).__name__}: {e} in line {sys.exc_info()[-1].tb_lineno}'
+    
+    
+    def getKNNMetrics(self) -> Tuple[bool, Dict | str]:
+        """
+        Retorna métricas de qualidade do modelo KNN.
+        
+        Returns:
+            Tupla (sucesso, métricas)
+        """
+        try:
+            if not self.knnModel.isTrained:
+                return False, "Modelo não treinado"
+            
+            # Buscar atletas para teste
+            athletes = self.session.query(Athlete).all()
+            athletesData = [athlete.dict() for athlete in athletes]
+            dfAthletes = pd.DataFrame(athletesData)
+            
+            # Obter métricas
+            metrics = self.knnModel.getModelMetrics(dfAthletes)
+            
+            return True, metrics
+            
+        except Exception as e:
+            return -1, f'{type(e).__name__}: {e} in line {sys.exc_info()[-1].tb_lineno}'
+    
+    
+    def optimizeKNN(self) -> Tuple[bool, Dict | str]:
+        """
+        Otimiza o valor de K do modelo KNN.
+        
+        Returns:
+            Tupla (sucesso, resultados da otimização)
+        """
+        try:
+            # Buscar atletas
+            athletes = self.session.query(Athlete).all()
+            
+            if len(athletes) < 20:
+                return False, "Necessário pelo menos 20 atletas"
+            
+            athletesData = [athlete.dict() for athlete in athletes]
+            dfAthletes = pd.DataFrame(athletesData)
+            
+            # Otimizar K
+            bestK, results = self.knnModel.optimizeKValue(dfAthletes)
+            
+            # Retreinar com melhor K
+            trainStatus, trainMsg = self.knnModel.fit(dfAthletes)
+            
+            if trainStatus:
+                # Salvar modelo otimizado
+                self.knnModel.saveModel('models/knn_model.pkl')
+                
+                return True, {
+                    'melhorK': bestK,
+                    'resultados': results,
+                    'mensagem': f"Modelo otimizado com K={bestK} e retreinado"
+                }
+            else:
+                return False, trainMsg
+                
+        except Exception as e:
+            return -1, f'{type(e).__name__}: {e} in line {sys.exc_info()[-1].tb_lineno}'
+    
+    
+    def getFeatureImportance(self) -> Tuple[bool, Dict | str]:
+        """
+        Retorna a importância de cada feature na classificação.
+        
+        Returns:
+            Tupla (sucesso, importância das features)
+        """
+        try:
+            athletes = self.session.query(Athlete).all()
+            athletesData = [athlete.dict() for athlete in athletes]
+            dfAthletes = pd.DataFrame(athletesData)
+            
+            importance = self.knnModel.getFeatureImportance(dfAthletes)
+            
+            return True, importance
+            
+        except Exception as e:
+            return -1, f'{type(e).__name__}: {e} in line {sys.exc_info()[-1].tb_lineno}'
     
     
     def getDashboardInfo(self):
