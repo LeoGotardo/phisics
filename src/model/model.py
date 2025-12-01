@@ -12,10 +12,9 @@ from config import Config
         
 class Model:
     def __init__(self):
-        self.setupKMeans(n_clusters=3)
-        self.CLUSTERS = ['Elite', 'Competitivo', 'Intermediário', 'Iniciante']
         self.db = Config.db
         self.session = Config.session
+        self.knnModel = KNNModel()
         
         self.create_tables()
         
@@ -49,6 +48,24 @@ class Model:
         
         return True, csvFile
         
+        
+    def setupKNNModel(self) -> tuple[bool, str]:
+        try:
+            self.knnModel.trainModel()
+            return True, "KNN Model treinado com sucesso!"
+        except Exception as e:
+            return -1, str(f'{type(e).__name__}: {e} in line {sys.exc_info()[-1].tb_lineno} in file {sys.exc_info()[-1].tb_frame.f_code.co_filename}')
+        
+    
+    def classifyAthlete(self, athleteData: dict | Athlete) -> tuple[bool, str]:
+        try:
+            if isinstance(athleteData, Athlete):
+                athleteData = athleteData.dict().pop('cluster')
+            cluster = self.knnModel.classifyAthlete(athleteData)
+            return True, cluster
+        except Exception as e:
+            return -1, str(f'{type(e).__name__}: {e} in line {sys.exc_info()[-1].tb_lineno} in file {sys.exc_info()[-1].tb_frame.f_code.co_filename}')
+    
     
     def getDashboardInfo(self):
         try:

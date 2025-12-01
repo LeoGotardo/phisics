@@ -27,6 +27,7 @@ class Athlete(UserMixin, Config.db.Model):
         self.arremesso = arremesso
         self.salto_horizontal = salto_horizontal
         self.abdominais = abdominais
+        self.cluster = -1  # Inicializa o cluster como -1 (não classificado)
         
     def dict(self) -> dict:
         return {
@@ -39,5 +40,6 @@ class Athlete(UserMixin, Config.db.Model):
             'arremesso': self.arremesso,
             'salto_horizontal': self.salto_horizontal,
             'abdominais': self.abdominais,
+            'cluster': self.cluster
         }
         
