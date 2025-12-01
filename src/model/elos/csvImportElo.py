@@ -3,7 +3,7 @@ import pandas as pd
 from src.utils.dataclasses import Column, Elo
 from src.model.athleteModel import Athlete
 from src.utils.dataUtils import DataUtils
-from config import Config
+from src.config import Config
 from io import BytesIO
 
 
@@ -29,7 +29,6 @@ class CSVImportElo(Elo):
             self.validateColumns,
             self.sanitizeCSV,
             self.listAthletes,
-            self.importAthletes
         ]
     
     
@@ -140,10 +139,10 @@ class CSVImportElo(Elo):
                     nome=row['nome'],
                     data_nascimento=row['data_nascimento'],
                     sexo=row['sexo'],
-                    estatura=row['estatura'],
+                    altura=row['altura'],
                     envergadura=row['envergadura'],
                     arremesso=row['arremesso'],
-                    salto_horizontal=row['salto_horizontal'],
+                    saltoHorizontal=row['saltoHorizontal'],
                     abdominais=row['abdominais']
                 )
                 athletes.append(athlete)

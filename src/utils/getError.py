@@ -24,8 +24,8 @@ cluster_mapping = joblib.load('cluster_mapping.pkl')
 
 # Preparar dados
 df['sexo_encoded'] = df['sexo'].map({'M': 1, 'F': 0})
-features = ['sexo_encoded', 'massa_corporal', 'estatura', 'envergadura', 
-            'arremesso', 'salto_horizontal', 'abdominais']
+features = ['sexo_encoded', 'massa_corporal', 'altura', 'envergadura', 
+            'arremesso', 'saltoHorizontal', 'abdominais']
 X = df[features]
 X_scaled = scaler.transform(X)
 

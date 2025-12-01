@@ -1,5 +1,6 @@
 from flask import Flask, render_template, request, redirect, url_for, flash, Blueprint, send_file
 from src.model.model import Model
+from icecream import ic
 from io import BytesIO
 
 from src.config import Config
@@ -82,7 +83,8 @@ class Controller:
     def index(self):
         status, info = self.model.getDashboardInfo()
         if status == True:
-            return render_template('dashboard.html')
+            ic(info)
+            return render_template('dashboard.html', **info)
         if status == -1:
             raise Exception(info)
         
@@ -134,30 +136,40 @@ class Controller:
     
     def review(self):
         match request.method:
-            case 'POST':
-                status, response = self.model.getAthlets(request.form)
-                if status == -1:
-                    raise Exception(response)
-                if status == True:
-                    flash(response, category='success')
+            case 'GET':
+                success, athletes = self.model.getAthletes(paginated=True)
+                if success:
+                    ic(athletes)
+                    return render_template('analise.html', athletes=athletes)
                 else:
-                    flash(response, category='error')
-                return render_template('analise.html')
-            case "GET":
-                return render_template('analise.html')
+                    raise Exception(athletes)
+            case "POST":
+                sort = request.form.get('sort', 'name')
+                sortOrder = request.form.get('sortOrder', 'desc')
+                query = request.form.get('query', '')
+                paginated = request.form.get('paginated', 'false') == 'true'
+                page = request.form.get('page', '1')
+                perPage = request.form.get('perPage', '10')
+                
+                success, athletes = self.model.getAthletes(sort, sortOrder, query, page, perPage, paginated=True)
+                if success == True:
+                    return render_template('analise.html', athletes=athletes)
+                else:
+                    raise Exception(athletes)
             case _:
                 return render_template('404.html')
 
 
     def viewPage(self):
-        status, info = self.model.getViewInfo()
-        if status == True:
-            return render_template('view.html', info)
-        if status == -1:
-            raise Exception(info)
-        else:
-            flash(info, category='error')
-            return render_template('view.html')
+        match request.method:
+            case 'GET':
+                success, info = self.model.getViewInfo()
+                if success:
+                    return render_template('view.html', info=info)
+                else:
+                    raise Exception(info)
+            case _:
+                return render_template('404.html')
         
         
 if __name__ == '__main__':

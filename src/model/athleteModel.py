@@ -1,5 +1,5 @@
 from flask_login import UserMixin
-from config import Config
+from src.config import Config
 
 import uuid
 

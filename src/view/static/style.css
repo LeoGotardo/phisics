@@ -242,7 +242,7 @@ nav a.active {
 
 .table-header {
     display: grid;
-    grid-template-columns: 60px 2fr repeat(5, 1fr) 100px;
+    grid-template-columns: 60px 2fr repeat(6, 1fr) 100px;
     gap: 16px;
     padding: 16px 24px;
     background: #0a0a0a;

@@ -4,7 +4,7 @@ import numpy as np
 
 def generateData(returnType: str = 'df') -> pd.DataFrame | list:
     # Função para gerar dados com distribuição realista
-    def gerar_dados(n, sexo_dist, estatura_range, envergadura_range, 
+    def gerar_dados(n, sexo_dist, altura_range, envergadura_range, 
                     arremesso_range, salto_range, abdominais_range, cluster):
         dados = []
         
@@ -14,24 +14,24 @@ def generateData(returnType: str = 'df') -> pd.DataFrame | list:
             
             # Ajustes baseados no sexo
             if sexo == 'M':
-                estatura = np.random.uniform(*estatura_range)
-                envergadura = estatura * np.random.uniform(1.0, 1.06)
+                altura = np.random.uniform(*altura_range)
+                envergadura = altura * np.random.uniform(1.0, 1.06)
                 arremesso = np.random.uniform(*arremesso_range)
                 salto = np.random.uniform(*salto_range)
                 abdominais = np.random.randint(*abdominais_range)
             else:
-                estatura = np.random.uniform(estatura_range[0] * 0.92, estatura_range[1] * 0.95)
-                envergadura = estatura * np.random.uniform(1.0, 1.05)
+                altura = np.random.uniform(altura_range[0] * 0.92, altura_range[1] * 0.95)
+                envergadura = altura * np.random.uniform(1.0, 1.05)
                 arremesso = np.random.uniform(arremesso_range[0] * 0.7, arremesso_range[1] * 0.75)
                 salto = np.random.uniform(salto_range[0] * 0.8, salto_range[1] * 0.85)
                 abdominais = np.random.randint(int(abdominais_range[0] * 0.85), int(abdominais_range[1] * 0.9))
             
             dados.append({
                 'sexo': sexo,
-                'estatura': round(estatura, 2),
+                'altura': round(altura, 2),
                 'envergadura': round(envergadura, 2),
                 'arremesso': round(arremesso, 2),
-                'salto_horizontal': round(salto, 2),
+                'saltoHorizontal': round(salto, 2),
                 'abdominais': abdominais,
                 'cluster': cluster
             })
@@ -42,7 +42,7 @@ def generateData(returnType: str = 'df') -> pd.DataFrame | list:
     elite = gerar_dados(
         n=40,
         sexo_dist=[0.6, 0.4],  # 60% M, 40% F
-        estatura_range=(1.65, 1.85),
+        altura_range=(1.65, 1.85),
         envergadura_range=(1.70, 1.95),
         arremesso_range=(10, 14),
         salto_range=(2.6, 3.2),
@@ -54,7 +54,7 @@ def generateData(returnType: str = 'df') -> pd.DataFrame | list:
     competitivo = gerar_dados(
         n=40,
         sexo_dist=[0.55, 0.45],
-        estatura_range=(1.60, 1.82),
+        altura_range=(1.60, 1.82),
         envergadura_range=(1.65, 1.90),
         arremesso_range=(7.5, 10.5),
         salto_range=(2.1, 2.7),
@@ -66,7 +66,7 @@ def generateData(returnType: str = 'df') -> pd.DataFrame | list:
     intermediario = gerar_dados(
         n=40,
         sexo_dist=[0.5, 0.5],
-        estatura_range=(1.58, 1.80),
+        altura_range=(1.58, 1.80),
         envergadura_range=(1.60, 1.85),
         arremesso_range=(5.5, 8.0),
         salto_range=(1.7, 2.3),
@@ -78,7 +78,7 @@ def generateData(returnType: str = 'df') -> pd.DataFrame | list:
     iniciante = gerar_dados(
         n=40,
         sexo_dist=[0.5, 0.5],
-        estatura_range=(1.55, 1.78),
+        altura_range=(1.55, 1.78),
         envergadura_range=(1.58, 1.82),
         arremesso_range=(3.5, 6.0),
         salto_range=(1.2, 1.8),
@@ -109,7 +109,7 @@ def generateData(returnType: str = 'df') -> pd.DataFrame | list:
         print("\nPrimeiras linhas do dataset:")
         print(df.head(10))
         print("\nEstatísticas descritivas por cluster:")
-        print(df.groupby('cluster')[['altura', 'envergadura', 'arremesso', 'salto_horizontal', 'abdominais']].mean().round(2))
+        print(df.groupby('cluster')[['altura', 'envergadura', 'arremesso', 'saltoHorizontal', 'abdominais']].mean().round(2))
 
         # Salvando também em formato separado por cluster para facilitar análise
         for cluster in ['Elite', 'Competitivo', 'Intermediário', 'Iniciante']:

@@ -37,6 +37,10 @@ class Model:
         
         try:
             athleteList = elo.startElo(file)
+            success = self.createAthletes(athleteList, rowData=False)
+            
+            if not success:
+                return -1, "Erro ao salvar atletas no banco de dados"
         except Exception as e:
             return -1, str(f'{type(e).__name__}: {e} in line {sys.exc_info()[-1].tb_lineno} in file {sys.exc_info()[-1].tb_frame.f_code.co_filename}')
         
@@ -48,13 +52,13 @@ class Model:
         
         try:
             if not allAthletes and athletesID != None:
-                csvFile = elo.startElo(athetesID=athletesID, fullData=fullData)
+                file = elo.startElo(athetesID=athletesID, fullData=fullData)
             else:
-                csvFile = elo.startElo(fullData=fullData)
+                file = elo.startElo(fullData=fullData)
         except Exception as e:
             return -1, str(f'{type(e).__name__}: {e} in line {sys.exc_info()[-1].tb_lineno} in file {sys.exc_info()[-1].tb_frame.f_code.co_filename}')
         
-        return True, csvFile
+        return True, file
  
  
     def trainKNNModel(self, forceRetrain: bool = False) -> Tuple[bool, str]:
@@ -326,37 +330,37 @@ class Model:
             
             eliteCluster = {'label': 'Elite',
                             'count': elitAthletes,
-                            "heightMed": self.session.query(Athlete).filter(Athlete.cluster == 'Elite').with_entities(func.avg(Athlete.estatura)).scalar(),
+                            "heightMed": self.session.query(Athlete).filter(Athlete.cluster == 'Elite').with_entities(func.avg(Athlete.altura)).scalar(),
                             "sizeMed": self.session.query(Athlete).filter(Athlete.cluster == 'Elite').with_entities(func.avg(Athlete.envergadura)).scalar(),
                             "arremessoMed": self.session.query(Athlete).filter(Athlete.cluster == 'Elite').with_entities(func.avg(Athlete.arremesso)).scalar(),
-                            "saltoMed": self.session.query(Athlete).filter(Athlete.cluster == 'Elite').with_entities(func.avg(Athlete.salto_horizontal)).scalar(),
+                            "saltoMed": self.session.query(Athlete).filter(Athlete.cluster == 'Elite').with_entities(func.avg(Athlete.saltoHorizontal)).scalar(),
                             "abdominMed": self.session.query(Athlete).filter(Athlete.cluster == 'Elite').with_entities(func.avg(Athlete.abdominais)).scalar()
                             }
             
             competitiveCluster = {'label': 'Competitivo',
                                 'count': competeAthletes,
-                                "heightMed": self.session.query(Athlete).filter(Athlete.cluster == 'Competitivo').with_entities(func.avg(Athlete.estatura)).scalar(),
+                                "heightMed": self.session.query(Athlete).filter(Athlete.cluster == 'Competitivo').with_entities(func.avg(Athlete.altura)).scalar(),
                                 "sizeMed": self.session.query(Athlete).filter(Athlete.cluster == 'Competitivo').with_entities(func.avg(Athlete.envergadura)).scalar(),
                                 "arremessoMed": self.session.query(Athlete).filter(Athlete.cluster == 'Competitivo').with_entities(func.avg(Athlete.arremesso)).scalar(),
-                                "saltoMed": self.session.query(Athlete).filter(Athlete.cluster == 'Competitivo').with_entities(func.avg(Athlete.salto_horizontal)).scalar(),
+                                "saltoMed": self.session.query(Athlete).filter(Athlete.cluster == 'Competitivo').with_entities(func.avg(Athlete.saltoHorizontal)).scalar(),
                                 "abdominMed": self.session.query(Athlete).filter(Athlete.cluster == 'Competitivo').with_entities(func.avg(Athlete.abdominais)).scalar()
                                 }
             
             intemedianCluster = {'label': 'Intermediário',
                                 'count': intermedAthletes,
-                                "heightMed": self.session.query(Athlete).filter(Athlete.cluster == 'Intermediario').with_entities(func.avg(Athlete.estatura)).scalar(),
+                                "heightMed": self.session.query(Athlete).filter(Athlete.cluster == 'Intermediario').with_entities(func.avg(Athlete.altura)).scalar(),
                                 "sizeMed": self.session.query(Athlete).filter(Athlete.cluster == 'Intermediario').with_entities(func.avg(Athlete.envergadura)).scalar(),
                                 "arremessoMed": self.session.query(Athlete).filter(Athlete.cluster == 'Intermediario').with_entities(func.avg(Athlete.arremesso)).scalar(),
-                                "saltoMed": self.session.query(Athlete).filter(Athlete.cluster == 'Intermediario').with_entities(func.avg(Athlete.salto_horizontal)).scalar(),
+                                "saltoMed": self.session.query(Athlete).filter(Athlete.cluster == 'Intermediario').with_entities(func.avg(Athlete.saltoHorizontal)).scalar(),
                                 "abdominMed": self.session.query(Athlete).filter(Athlete.cluster == 'Intermediario').with_entities(func.avg(Athlete.abdominais)).scalar()
                                 }
             
             beginnerCluster = {'label': 'Iniciante',
                                 'count': beginnerAthletes,
-                                "heightMed": self.session.query(Athlete).filter(Athlete.cluster == 'Iniciante').with_entities(func.avg(Athlete.estatura)).scalar(),
+                                "heightMed": self.session.query(Athlete).filter(Athlete.cluster == 'Iniciante').with_entities(func.avg(Athlete.altura)).scalar(),
                                 "sizeMed": self.session.query(Athlete).filter(Athlete.cluster == 'Iniciante').with_entities(func.avg(Athlete.envergadura)).scalar(),
                                 "arremessoMed": self.session.query(Athlete).filter(Athlete.cluster == 'Iniciante').with_entities(func.avg(Athlete.arremesso)).scalar(),
-                                "saltoMed": self.session.query(Athlete).filter(Athlete.cluster == 'Iniciante').with_entities(func.avg(Athlete.salto_horizontal)).scalar(),
+                                "saltoMed": self.session.query(Athlete).filter(Athlete.cluster == 'Iniciante').with_entities(func.avg(Athlete.saltoHorizontal)).scalar(),
                                 "abdominMed": self.session.query(Athlete).filter(Athlete.cluster == 'Iniciante').with_entities(func.avg(Athlete.abdominais)).scalar()
                                 }
 
@@ -379,72 +383,87 @@ class Model:
     
     
     def getAthletes(self, sort: str = 'id', sortOrder: str = 'desc', query: str = None, paginated: bool = False, page: int = 1, per_page: int = 10) -> tuple[bool, list[Athlete]] | tuple[bool, dict]:
-        
-        sortOptions = {
-            'name': Athlete.nome,
-            'data': Athlete.data_nascimento,
-            'sex': Athlete.sexo,
-            'estatura': Athlete.estatura,
-            'envergadura': Athlete.envergadura,
-            'arremesso': Athlete.arremesso,
-            'salto': Athlete.salto_horizontal,
-            'abdominais': Athlete.abdominais
-        }
-        
-        sortColumn = sortOptions.get(sort, Athlete.nome)
-        
-        with Config.app.app_context():
-            baseQuery = self.session.query(Athlete)
-            
-        if query:
-            baseQuery = baseQuery.filter(Athlete.nome.like(f'%{query}%'))
-            
-        if sortOrder == 'desc':
-            baseQuery = baseQuery.order_by(sortColumn.desc())
-        else:
-            baseQuery = baseQuery.order_by(sortColumn.asc())
-            
-        if paginated:
-            paginatedResults = baseQuery.paginate(page=page, per_page=per_page, error_out=False)
-            
-            athlets = [athlete.dict() for athlete in paginatedResults.items]
-            
-            currentPage = paginatedResults.page
-            totalPages = paginatedResults.pages
-            
-            startPage = max(1, currentPage - 5)
-            endPage = min(totalPages, currentPage + 5)
-            visiblePages = list(range(startPage, endPage + 1))
-            
-            athlets = {
-                'items': athlets,
-                'pagination': {
-                    'currentPage': currentPage,
-                    'totalPages': totalPages,
-                        'total': paginatedResults.total,
-                    'perPage': paginatedResults.per_page,
-                    'hasPrev': paginatedResults.has_prev,
-                    'hasNext': paginatedResults.has_next,
-                    'prevPage': currentPage - 1 if paginatedResults.has_prev else None,
-                    'nextPage': currentPage + 1 if paginatedResults.has_next else None,
-                    'visiblePages': visiblePages,
-                    'showFirst': 1 not in visiblePages,
-                    'showLast': totalPages not in visiblePages,
-                    'showLeftEllipsis': startPage > 2,
-                    'showRightEllipsis': endPage < totalPages - 1
-                },
-                'filters': {
-                    'query': query,
-                    'sort': sort,
-                    'sortOrder': sortOrder,
-                }
+        try:
+            sortOptions = {
+                'name': Athlete.nome,
+                'data': Athlete.dataNascimento,
+                'sex': Athlete.sexo,
+                'altura': Athlete.altura,
+                'envergadura': Athlete.envergadura,
+                'arremesso': Athlete.arremesso,
+                'salto': Athlete.saltoHorizontal,
+                'abdominais': Athlete.abdominais
             }
             
-        else:
-            athlets = baseQuery.all()
-            athlets = [athlete.dict() for athlete in athlets]
+            sortColumn = sortOptions.get(sort, Athlete.nome)
             
-        return True, athlets
+            with Config.app.app_context():
+                baseQuery = self.session.query(Athlete)
+                
+            if query:
+                baseQuery = baseQuery.filter(Athlete.nome.like(f'%{query}%'))
+                
+            if sortOrder == 'desc':
+                baseQuery = baseQuery.order_by(sortColumn.desc())
+            else:
+                baseQuery = baseQuery.order_by(sortColumn.asc())
+                
+            if paginated:
+                paginatedResults = baseQuery.paginate(page=page, per_page=per_page, error_out=False)
+                
+                athlets = [athlete.dict() for athlete in paginatedResults.items]
+                
+                currentPage = paginatedResults.page
+                totalPages = paginatedResults.pages
+                
+                startPage = max(1, currentPage - 5)
+                endPage = min(totalPages, currentPage + 5)
+                visiblePages = list(range(startPage, endPage + 1))
+                
+                athlets = {
+                    'items': athlets,
+                    'pagination': {
+                        'currentPage': currentPage,
+                        'totalPages': totalPages,
+                            'total': paginatedResults.total,
+                        'perPage': paginatedResults.per_page,
+                        'hasPrev': paginatedResults.has_prev,
+                        'hasNext': paginatedResults.has_next,
+                        'prevPage': currentPage - 1 if paginatedResults.has_prev else None,
+                        'nextPage': currentPage + 1 if paginatedResults.has_next else None,
+                        'visiblePages': visiblePages,
+                        'showFirst': 1 not in visiblePages,
+                        'showLast': totalPages not in visiblePages,
+                        'showLeftEllipsis': startPage > 2,
+                        'showRightEllipsis': endPage < totalPages - 1
+                    },
+                    'filters': {
+                        'query': query,
+                        'sort': sort,
+                        'sortOrder': sortOrder,
+                    }
+                }
+                
+            else:
+                athlets = baseQuery.all()
+                athlets = [athlete.dict() for athlete in athlets]
+                
+            return True, athlets
+        except Exception as e:
+            return -1, str(f'{type(e).__name__}: {e} in line {sys.exc_info()[-1].tb_lineno} in file {sys.exc_info()[-1].tb_frame.f_code.co_filename}')
+    
+    
+    def getViewInfo(self) -> tuple[bool, dict]:
+        try:
+            dbStats = self.getDBStats()
+            modelHealth = self.getModelHealth()
+            
+            return True, {
+                'dbStats': dbStats,
+                'modelHealth': modelHealth
+            }
+        except Exception as e:
+            return -1, str(f'{type(e).__name__}: {e} in line {sys.exc_info()[-1].tb_lineno} in file {sys.exc_info()[-1].tb_frame.f_code.co_filename}')
     
     
     def createAthletes(self, athletes: list[dict] | list[Athlete], rowData: bool = False) -> bool:

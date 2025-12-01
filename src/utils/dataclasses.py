@@ -1,4 +1,3 @@
-from src.model.elos.eloManager import EloManager
 from typing import Callable, Any, Literal
 from dataclasses import dataclass, field
 
@@ -46,8 +45,11 @@ class Elo:
     
     def startFrom(self, func: Callable, *args, **kwargs) -> any:
         """Inicia a cadeia a partir de uma função específica"""
-        for i, func in enumerate(self.chain):
-            if func == func:
+        
+        from src.model.elos.eloManager import EloManager
+        
+        for i, currentFuction in enumerate(self.chain):
+            if func == currentFuction:
                 self.chain = self.chain[i:]
         
         return EloManager(self).startElo(*args, **kwargs)

@@ -33,22 +33,30 @@
             <div>Cluster</div>
         </div>
 
-        {% for athlete in athletes %}
+        {% if athletes['items'] == [] %}
+        <div class="table-row">
+            <div class="name">
+                Nenhum Atleta
+            </div>
+        </div>
+        {% else %}
+        {% for athlete in athletes['items'] %}
         <div class="table-row">
             <div class="rank">1</div>
             <div class="name">
                 {{ athlete.nome }}
-                <div class="sub">{{ athlete.data_nascimento.year }} anos, {{ athlete.sexo }}</div>
+                <div class="sub">{{ athlete.dataNascimento.year }} anos, {{ athlete.sexo }}</div>
             </div>
             
-            <div class="metric">{{ athlete.estatura }}</div>
+            <div class="metric">{{ athlete.altura }}</div>
             <div class="metric">{{ athlete.envergadura }}</div>
             <div class="metric">{{ athlete.arremesso }}</div>
-            <div class="metric">{{ athlete.salto_horizontal }}</div>
+            <div class="metric">{{ athlete.saltoHorizontal }}</div>
             <div class="metric">{{ athlete.abdominais }}</div>
-            <div><span class="badge badge-{{ athlete.nivel_desempenho.lower() }}">{{ athlete.nivel_desempenho }}</span></div>
+            <div><span class="badge badge-{{ athlete.cluster.lower() }}">{{ athlete.cluster }}</span></div>
         </div>
         {% endfor %}
+        {% endif %}
     </div>
 
     <div class="actions">

@@ -53,7 +53,7 @@ marcelo = np.array([[
     182, # altura_cm
     77.6,  # peso_kg
     42,    # flexibilidade_cm
-    197,   # salto_horizontal_cm
+    197,   # saltoHorizontal_cm
     45.8,   # salto_vertical_cm
     5.6,   # arremesso_mb_m
     52    # abdominais_1min
@@ -64,7 +64,7 @@ sla = np.array([[
     173, # altura_cm
     73.1,  # peso_kg
     40,    # flexibilidade_cm
-    83,   # salto_horizontal_cm
+    83,   # saltoHorizontal_cm
     21.1,   # salto_vertical_cm
     4.2,   # arremesso_mb_m
     25    # abdominais_1min
@@ -75,7 +75,7 @@ eu = np.array([[
     161.9, # altura_cm
     54.1,  # peso_kg
     45,    # flexibilidade_cm
-    122,   # salto_horizontal_cm
+    122,   # saltoHorizontal_cm
     21.9,   # salto_vertical_cm
     3.4,   # arremesso_mb_m
     26    # abdominais_1min

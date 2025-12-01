@@ -23,8 +23,8 @@ cluster_mapping = joblib.load('cluster_mapping.pkl')
 
 # Preparar dados
 df['sexo_encoded'] = df['sexo'].map({'M': 1, 'F': 0})
-features = ['sexo_encoded', 'massa_corporal', 'estatura', 'envergadura', 
-            'arremesso', 'salto_horizontal', 'abdominais']
+features = ['sexo_encoded', 'massa_corporal', 'altura', 'envergadura', 
+            'arremesso', 'saltoHorizontal', 'abdominais']
 X = df[features]
 X_scaled = scaler.transform(X)
 
@@ -42,7 +42,7 @@ print("=" * 70)
 
 # Criar variáveis de potência
 df['potencia_superior'] = df['arremesso']  # Arremesso representa força superior
-df['potencia_inferior'] = df['salto_horizontal']  # Salto representa força inferior
+df['potencia_inferior'] = df['saltoHorizontal']  # Salto representa força inferior
 
 correlation = stats.pearsonr(df['potencia_superior'], df['potencia_inferior'])
 r_value = correlation[0]
@@ -110,7 +110,7 @@ print("4. PERFIL MÉDIO POR CLUSTER")
 print("=" * 70)
 
 # Normalizar cada feature para escala 0-100
-features_fisicas = ['arremesso', 'salto_horizontal', 'abdominais']
+features_fisicas = ['arremesso', 'saltoHorizontal', 'abdominais']
 df_normalized = df.copy()
 
 for feat in features_fisicas:
