@@ -100,15 +100,11 @@ document.addEventListener('DOMContentLoaded', function() {
     carregarDados();
 });
 
-async function carregarDados() {
+function carregarDados() {
     try {
-        const response = await fetch('/api/dados-visualizacao');
-        
-        if (!response.ok) {
-            throw new Error('Erro ao carregar dados');
-        }
-        
-        const dados = await response.json();
+        const dados = {{ info | tojson }};
+
+        console.log('Dados recebidos:', dados);
         
         // Ocultar loading e mostrar conteúdo
         document.getElementById('loadingState').style.display = 'none';

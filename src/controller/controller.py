@@ -164,7 +164,7 @@ class Controller:
         match request.method:
             case 'GET':
                 success, info = self.model.getViewInfo()
-                if success:
+                if success == True:
                     return render_template('view.html', info=info)
                 else:
                     raise Exception(info)
@@ -173,4 +173,5 @@ class Controller:
         
         
 if __name__ == '__main__':
-    Controller(Config.app)
+    controller = Controller(Config.app)
+    controller.app.run(debug=Config.DEBUG, host=Config.HOST, port=Config.PORT)
