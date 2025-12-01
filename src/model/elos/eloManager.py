@@ -1,5 +1,5 @@
 from typing import Callable, Any, Optional
-from utils.dataclasses import Elo
+from src.utils.dataclasses import Elo
 
 
 class EloManager:

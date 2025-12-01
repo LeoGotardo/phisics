@@ -1,11 +1,9 @@
 import pandas as pd
 
-from utils.dataclasses import Column, Elo
-from model.athleteModel import Athlete
-from utils.dataUtils import DataUtils
-from typing import Callable, Any
+from src.utils.dataclasses import Column, Elo
+from src.model.athleteModel import Athlete
+from src.utils.dataUtils import DataUtils
 from config import Config
-from model import Model
 from io import BytesIO
 
 

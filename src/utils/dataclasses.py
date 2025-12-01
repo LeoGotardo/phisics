@@ -3,7 +3,6 @@ from typing import Callable, Any, Literal
 from dataclasses import dataclass, field
 
 
-
 @dataclass
 class Elo:
     """

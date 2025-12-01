@@ -1,9 +1,8 @@
 from flask import Flask, render_template, request, redirect, url_for, flash, Blueprint, send_file
-from model.model import Model
+from src.model.model import Model
 from io import BytesIO
 
-from model.model import Model
-from config import Config
+from src.config import Config
 
 import traceback, sys, json
 
@@ -18,16 +17,21 @@ class Controller:
         self.app.register_error_handler(Exception, self.handleException)
         self.defineRouters()
         
-        self.app.run(debug=True)
+        self.app.run(debug=Config.DEBUG, host=Config.HOST, port=Config.PORT)
         
         
     def defineRouters(self):
         self.app.add_url_rule('/', view_func=self.index, methods=['GET'])
         self.app.add_url_rule('/analise', view_func=self.review, methods=['GET', 'POST'])
-        self.app.add_url_rule('/createAthlete', view_func=self.createAthlete, methods=['GET', 'POST'])
-        self.app.add_url_rule('/viewData', view_func=self.viewPage, methods=['GET'])
+        self.app.add_url_rule('/cadastro', view_func=self.createAthlete, methods=['GET', 'POST'])
+        self.app.add_url_rule('/view', view_func=self.viewPage, methods=['GET'])
         self.app.add_url_rule('/loadCSVData', view_func=self.loadCSVData, methods=['POST'])
         self.app.add_url_rule('/exportData', view_func=self.exportData, methods=['GET'])
+        
+        self.app.add_url_rule('/dashboard', 'renderDashboard', self.index, methods=['GET'])
+        self.app.add_url_rule('/cadastro', 'renderCadastro', self.createAthlete, methods=['GET'])
+        self.app.add_url_rule('/analise', 'renderReview', self.review, methods=['GET'])
+        self.app.add_url_rule('/visualizacao', 'renderViewPage', self.viewPage, methods=['GET'])
     
     
     def handleException(self, e):

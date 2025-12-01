@@ -1,18 +1,30 @@
+from src.utils.dataclasses import Column
 from flask_sqlalchemy import SQLAlchemy
 from dataclasses import dataclass
+from dotenv import load_dotenv
 from flask import Flask
-from src.utils.dataclasses import Column
 
-import locale
 
+import locale, os
+
+load_dotenv()
 
 @dataclass
 class Config:
+    SECRET_KEY = os.getenv('SECRET_KEY', 'secret_key')
+    DEBUG = os.getenv('DEBUG', True)
+    HOST = os.getenv('HOST', '0.0.0.0')
+    PORT = os.getenv('PORT', 5000)
+    
     locale.setlocale(locale.LC_TIME, 'pt_BR.UTF-8')
-    SECRET_KEY = "secret_key"
-    app = Flask(__name__)
+    
+    app = Flask(__name__, 
+                template_folder='view/templates',
+                static_folder='view/static')
+    
     app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///database.db'
     app.config['SECRET_KEY'] = SECRET_KEY
+    
     db = SQLAlchemy(app)
     session = db.session
     

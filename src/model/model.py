@@ -1,13 +1,14 @@
 import  sys, sys, pandas as pd
 
+
+from src.model.elos.csvImportElo import CSVImportElo
+from src.model.elos.csvExportElo import CSVExportElo
 from src.model.elos.eloManager import EloManager
-from typing import Tuple, List, Dict, Literal
-from elos.csvImportElo import CSVImportElo
-from elos.csvExportElo import CSVExportElo
-from athleteModel import Athlete
-from knnModel import KNNModel
+from src.model.athleteModel import Athlete
+from src.model.knnModel import KNNModel
+from typing import Tuple, List, Dict
+from src.config import Config
 from sqlalchemy import func
-from config import Config
 
         
 class Model:
@@ -316,10 +317,10 @@ class Model:
     def getDashboardInfo(self):
         try:
             totalAthletes = self.session.query(Athlete).count()
-            elitAthletes = self.session.query(Athlete).filter(Athlete.cluster == 'Elite').count()
-            competeAthletes = self.session.query(Athlete).filter(Athlete.cluster == 'Competitivo').count()
-            intermedAthletes = self.session.query(Athlete).filter(Athlete.cluster == 'Intermediário').count()
-            beginnerAthletes = self.session.query(Athlete).filter(Athlete.cluster == 'Iniciante').count()
+            elitAthletes = self.session.query(Athlete).filter(Athlete.cluster == 3).count()
+            competeAthletes = self.session.query(Athlete).filter(Athlete.cluster == 2).count()
+            intermedAthletes = self.session.query(Athlete).filter(Athlete.cluster == 1).count()
+            beginnerAthletes = self.session.query(Athlete).filter(Athlete.cluster == 0).count()
             
             totalInfo = {'totalAthletes': totalAthletes}
             

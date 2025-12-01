@@ -6,7 +6,7 @@ import uuid
 
 class Athlete(UserMixin, Config.db.Model):
     __tablename__ = 'athletes'
-    id = Config.db.Column(Config.db.String(32), primary_key=True, default=str(uuid.uuid4()))
+    id = Config.db.Column(Config.db.String(32), primary_key=True, default=lambda: str(uuid.uuid4()))
     nome = Config.db.Column(Config.db.String(50), nullable=False)
     dataNascimento = Config.db.Column(Config.db.Date, nullable=False)
     sexo = Config.db.Column(Config.db.String(10), nullable=False)
