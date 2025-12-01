@@ -119,7 +119,7 @@ class DataUtils:
     
     
     @staticmethod
-    def validString(x, minLength: int = 1, maxLength: int = 200) -> str | bool:
+    def validString(x, minLength: int = 1, regexFilter = STRING_REGEX, maxLength: int = 200) -> str | bool:
         """
         Valida e sanitiza uma string.
         
@@ -142,7 +142,7 @@ class DataUtils:
             if len(text) < minLength or len(text) > maxLength:
                 return False
             
-            if not DataUtils.STRING_REGEX.match(text):
+            if not regexFilter.match(text):
                 return False
             
             text = ' '.join(text.split())

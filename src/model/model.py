@@ -1,9 +1,8 @@
 import  sys, sys
 
-
 from elos.csvImportElo import CSVImportElo
 from elos.csvExportElo import CSVExportElo
-from elos.eloMenager import EloManager
+from src.model.elos.eloManager import EloManager
 from athleteModel import Athlete
 from knnModel import KNNModel
 from sqlalchemy import func
@@ -47,6 +46,22 @@ class Model:
             return -1, str(f'{type(e).__name__}: {e} in line {sys.exc_info()[-1].tb_lineno} in file {sys.exc_info()[-1].tb_frame.f_code.co_filename}')
         
         return True, csvFile
+    
+    
+    def classifyAthletes(self, athletes: list[Athlete | dict]) -> tuple[bool, list[dict]]:
+        try:
+            for athlete in athletes:
+                if isinstance(athlete, dict):
+                    athlete = Athlete(**athlete)
+                    
+                athlete.cluster = self.KNNModel.predict(athlete)
+            
+            success = self.createAthletes(athletes, rowData=False)
+        except Exception as e:            
+            return -1, str(f'{type(e).__name__}: {e} in line {sys.exc_info()[-1].tb_lineno} in file {sys.exc_info()[-1].tb_frame.f_code.co_filename}')
+        
+        return True, 
+    
         
         
     def setupKNNModel(self) -> tuple[bool, str]:
