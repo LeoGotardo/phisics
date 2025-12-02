@@ -161,15 +161,50 @@ class Controller:
 
 
     def viewPage(self):
+        """
+        Renderiza a página de visualização com dados estatísticos.
+        Gera gráficos PCA, correlação, core strength, radar e métricas de qualidade.
+        """
         match request.method:
             case 'GET':
                 success, info = self.model.getViewInfo()
+                
                 if success == True:
                     return render_template('view.html', info=info)
+                    
+                elif success == False:
+                    flash(info, category='warning')
+                    
+                    empty_data = {
+                        'pca_data': [],
+                        'variance_explained': {'pc1': 0, 'pc2': 0, 'total': 0},
+                        'potencia_data': {
+                            'x': [], 
+                            'y': [], 
+                            'correlacao': 0, 
+                            'p_value': '1.0'
+                        },
+                        'core_data': [],
+                        'perfil_data': [],
+                        'metricas': {
+                            'silhouette': 0, 
+                            'davies_bouldin': 0, 
+                            'inertia': 0
+                        },
+                        'estatisticas': {
+                            'total_atletas': 0, 
+                            'distribuicao': {}, 
+                            'features_analisadas': 0
+                        }
+                    }
+                    
+                    return render_template('view.html', info=empty_data)
+                
                 else:
                     raise Exception(info)
+            
             case _:
-                return render_template('404.html')
+                return render_template('404.html'), 404
         
         
 if __name__ == '__main__':

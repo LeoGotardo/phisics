@@ -3,10 +3,11 @@ import  sys, sys, pandas as pd
 
 from src.model.elos.csvImportElo import CSVImportElo
 from src.model.elos.csvExportElo import CSVExportElo
+from src.model.elos.viewDataElo import ViewDataElo
 from src.model.elos.eloManager import EloManager
+from typing import Tuple, List, Dict, Literal
 from src.model.athleteModel import Athlete
 from src.model.knnModel import KNNModel
-from typing import Tuple, List, Dict
 from src.config import Config
 from sqlalchemy import func
 
@@ -453,17 +454,30 @@ class Model:
             return -1, str(f'{type(e).__name__}: {e} in line {sys.exc_info()[-1].tb_lineno} in file {sys.exc_info()[-1].tb_frame.f_code.co_filename}')
     
     
-    def getViewInfo(self) -> tuple[bool, dict]:
+    def getViewInfo(self) -> Tuple[Literal[True, False, -1], Dict | str]:
+        """
+        Obtém todas as informações necessárias para a página de visualização.
+        Usa o ViewDataElo para processar os dados através de uma cadeia.
+        
+        Returns:
+            Tupla (status, dados)
+            - True: sucesso, retorna dicionário com dados
+            - False: erro leve, retorna mensagem
+            - -1: erro grave, retorna mensagem de erro
+        """
         try:
-            dbStats = self.getDBStats()
-            modelHealth = self.getModelHealth()
+            elo = EloManager(ViewDataElo())
+            view_data = elo.startElo()
             
-            return True, {
-                'dbStats': dbStats,
-                'modelHealth': modelHealth
-            }
+            return True, view_data
+            
+        except ValueError as e:
+            return False, str(e)
         except Exception as e:
-            return -1, str(f'{type(e).__name__}: {e} in line {sys.exc_info()[-1].tb_lineno} in file {sys.exc_info()[-1].tb_frame.f_code.co_filename}')
+            error_msg = (f'{type(e).__name__}: {e} '
+                        f'in line {sys.exc_info()[-1].tb_lineno} '
+                        f'in file {sys.exc_info()[-1].tb_frame.f_code.co_filename}')
+            return -1, error_msg
     
     
     def createAthletes(self, athletes: list[dict] | list[Athlete], rowData: bool = False) -> bool:
