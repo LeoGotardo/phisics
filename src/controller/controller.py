@@ -1,9 +1,10 @@
 from flask import Flask, render_template, request, redirect, url_for, flash, Blueprint, send_file
 from src.model.model import Model
+from src.config import Config
+from datetime import datetime
+import traceback, sys, json
 from icecream import ic
 from io import BytesIO
-from src.config import Config
-import traceback, sys, json
 
 
 class Controller:
@@ -183,10 +184,9 @@ class Controller:
     def createAthlete(self):
         match request.method:
             case 'POST':
-                ic(request.form.listvalues())
                 dataDict = {
                 'nome' : request.form.get('nome'),
-                'dataNascimento' : request.form.get('dataNascimento'),
+                'dataNascimento' : datetime.strptime(request.form.get('dataNascimento'), '%Y-%m-%d'),
                 'sexo' : request.form.get('sexo'),
                 'altura' : request.form.get('altura'),
                 'envergadura' : request.form.get('envergadura'),

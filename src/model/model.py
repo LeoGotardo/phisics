@@ -5,6 +5,7 @@ from src.model.elos.csvImportElo import CSVImportElo
 from src.model.elos.csvExportElo import CSVExportElo
 from src.model.elos.viewDataElo import ViewDataElo
 from src.model.elos.eloManager import EloManager
+from src.utils.dataGenerator import DataGenerator
 from src.model.athleteModel import Athlete
 from src.model.knnModel import KNNModel
 from src.config import Config
@@ -24,6 +25,11 @@ class Model:
             print(f"✓ {msg}")
         else:
             print(f"⚠ Modelo não carregado, será necessário treinar: {msg}")
+            data = DataGenerator()
+            success, msg = self.knnModel.fit(data)
+            if success != True:
+                print(f"⚠ Não foi possível treinar o modelo: {msg}")
+
         
         self.create_tables()
         
@@ -558,11 +564,13 @@ class Model:
             Tupla (status, mensagem)
         """
         try:
-            # Criar objeto Athlete
             athlete = Athlete(**athleteData)
-            ic(athleteData)
+
+            success, cluster = self.knnModel.predict(athleteData)
+            if success != True:
+                return -1, cluster
+            athlete.cluster = cluster
             
-            # Adicionar ao banco
             self.session.add(athlete)
             self.session.commit()
             
