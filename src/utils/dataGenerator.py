@@ -1,67 +1,104 @@
 import pandas as pd
 import numpy as np
 from datetime import datetime, timedelta
+from typing import Tuple, List, Dict, Literal
 import random
+
+from src.model.athleteModel import Athlete
+from src.config import Config
+
 
 class DataGenerator:
     """
-    Gerador de dados sintéticos para treinamento do modelo de classificação de atletas.
+    Gerador de dados sintéticos para treinamento e testes.
     Gera dados realistas com distribuições adequadas para cada cluster.
+    Compatível com o modelo Athlete e banco de dados do projeto.
     """
     
-    def __init__(self, nAthletes: int = 160) -> None:
+    def __init__(self, nAthletes: int = 160):
+        """
+        Inicializa o gerador de dados.
+        
+        Args:
+            nAthletes: Número total de atletas a gerar
+        """
         self.nAthletes = nAthletes
-        self.nomes_masculinos = [
+        self.session = Config.session
+        
+        self.nomesMasculinos = [
             'João', 'Pedro', 'Lucas', 'Gabriel', 'Matheus', 'Rafael', 'Bruno', 
             'Felipe', 'Guilherme', 'Rodrigo', 'Diego', 'Fernando', 'André', 
             'Carlos', 'Eduardo', 'Thiago', 'Marcelo', 'Daniel', 'Leonardo', 'Paulo'
         ]
-        self.nomes_femininos = [
+        
+        self.nomesFemininos = [
             'Maria', 'Ana', 'Juliana', 'Fernanda', 'Carla', 'Beatriz', 'Camila',
             'Amanda', 'Paula', 'Larissa', 'Mariana', 'Patrícia', 'Renata', 
             'Gabriela', 'Carolina', 'Vanessa', 'Bianca', 'Letícia', 'Natália', 'Débora'
         ]
+        
         self.sobrenomes = [
             'Silva', 'Santos', 'Oliveira', 'Souza', 'Costa', 'Ferreira', 'Rodrigues',
             'Alves', 'Pereira', 'Lima', 'Gomes', 'Martins', 'Ribeiro', 'Carvalho',
             'Rocha', 'Almeida', 'Nascimento', 'Araújo', 'Fernandes', 'Barbosa'
         ]
-    
-    def gerar_nome(self, sexo: str) -> str:
-        """Gera um nome aleatório baseado no sexo"""
-        if sexo == 'M':
-            primeiro_nome = random.choice(self.nomes_masculinos)
-        else:
-            primeiro_nome = random.choice(self.nomes_femininos)
         
-        sobrenome = random.choice(self.sobrenomes)
-        return f"{primeiro_nome} {sobrenome}"
+        self.clusterNames = {
+            0: 'Iniciante',
+            1: 'Intermediário',
+            2: 'Competitivo',
+            3: 'Elite'
+        }
     
     
-    def gerar_data_nascimento(self) -> datetime:
-        """Gera uma data de nascimento aleatória entre 15 e 35 anos atrás"""
-        hoje = datetime.now()
-        anos_atras = random.randint(15, 35)
-        dias_random = random.randint(0, 365)
-        return hoje - timedelta(days=anos_atras * 365 + dias_random)
-    
-    
-    def gerar_dados_cluster(self, n: int, sexo_dist: list, altura_range: tuple, 
-                           envergadura_range: tuple, arremesso_range: tuple, 
-                           salto_range: tuple, abdominais_range: tuple, 
-                           cluster: str) -> list:
+    def gerarNome(self, sexo: str) -> str:
         """
-        Gera dados para um cluster específico com distribuições realistas.
+        Gera um nome aleatório baseado no sexo.
         
         Args:
-            n: Número de atletas a gerar
-            sexo_dist: [prob_masculino, prob_feminino]
-            altura_range: (min, max) altura em metros
-            envergadura_range: (min, max) envergadura em metros
-            arremesso_range: (min, max) arremesso em metros
-            salto_range: (min, max) salto horizontal em metros
-            abdominais_range: (min, max) abdominais em repetições
-            cluster: Nome do cluster
+            sexo: 'M' ou 'F'
+            
+        Returns:
+            Nome completo gerado
+        """
+        if sexo == 'M':
+            primeiroNome = random.choice(self.nomesMasculinos)
+        else:
+            primeiroNome = random.choice(self.nomesFemininos)
+        
+        sobrenome = random.choice(self.sobrenomes)
+        return f"{primeiroNome} {sobrenome}"
+    
+    
+    def gerarDataNascimento(self) -> datetime:
+        """
+        Gera uma data de nascimento aleatória entre 15 e 35 anos atrás.
+        
+        Returns:
+            Data de nascimento gerada
+        """
+        hoje = datetime.now()
+        anosAtras = random.randint(15, 35)
+        diasRandom = random.randint(0, 365)
+        return hoje - timedelta(days=anosAtras * 365 + diasRandom)
+    
+    
+    def gerarDadosCluster(self, n: int, sexoDist: list, alturaRange: tuple,
+                         envergaduraRange: tuple, arremessoRange: tuple,
+                         saltoRange: tuple, abdominaisRange: tuple,
+                         cluster: int) -> List[Dict]:
+        """
+        Gera dados para um cluster específico.
+        
+        Args:
+            n: Número de atletas
+            sexoDist: [prob_masculino, prob_feminino]
+            alturaRange: (min, max) altura em cm
+            envergaduraRange: (min, max) envergadura em cm
+            arremessoRange: (min, max) arremesso em metros
+            saltoRange: (min, max) salto horizontal em metros
+            abdominaisRange: (min, max) abdominais em repetições
+            cluster: ID do cluster (0-3)
             
         Returns:
             Lista de dicionários com dados dos atletas
@@ -69,130 +106,416 @@ class DataGenerator:
         dados = []
         
         for _ in range(n):
-            sexo = np.random.choice(['M', 'F'], p=sexo_dist)
-            nome = self.gerar_nome(sexo)
-            data_nascimento = self.gerar_data_nascimento()
+            sexo = np.random.choice(['M', 'F'], p=sexoDist)
+            nome = self.gerarNome(sexo)
+            dataNascimento = self.gerarDataNascimento()
             
             if sexo == 'M':
-                altura = np.random.uniform(*altura_range)
+                altura = np.random.uniform(*alturaRange)
                 envergadura = altura * np.random.uniform(1.0, 1.06)
-                arremesso = np.random.uniform(*arremesso_range)
-                salto = np.random.uniform(*salto_range)
-                abdominais = np.random.randint(*abdominais_range)
+                arremesso = np.random.uniform(*arremessoRange)
+                salto = np.random.uniform(*saltoRange)
+                abdominais = np.random.randint(*abdominaisRange)
             else:
-                altura = np.random.uniform(altura_range[0] * 0.92, altura_range[1] * 0.95)
+                # Mulheres geralmente têm valores proporcionalmente menores
+                altura = np.random.uniform(
+                    alturaRange[0] * 0.92, 
+                    alturaRange[1] * 0.95
+                )
                 envergadura = altura * np.random.uniform(1.0, 1.05)
-                arremesso = np.random.uniform(arremesso_range[0] * 0.7, arremesso_range[1] * 0.75)
-                salto = np.random.uniform(salto_range[0] * 0.8, salto_range[1] * 0.85)
+                arremesso = np.random.uniform(
+                    arremessoRange[0] * 0.7, 
+                    arremessoRange[1] * 0.75
+                )
+                salto = np.random.uniform(
+                    saltoRange[0] * 0.8, 
+                    saltoRange[1] * 0.85
+                )
                 abdominais = np.random.randint(
-                    int(abdominais_range[0] * 0.85), 
-                    int(abdominais_range[1] * 0.9)
+                    int(abdominaisRange[0] * 0.85),
+                    int(abdominaisRange[1] * 0.9)
                 )
             
             dados.append({
                 'nome': nome,
-                'dataNascimento': data_nascimento.strftime('%Y-%m-%d'),
+                'dataNascimento': dataNascimento,
                 'sexo': sexo,
                 'altura': round(altura, 2),
                 'envergadura': round(envergadura, 2),
                 'arremesso': round(arremesso, 2),
                 'saltoHorizontal': round(salto, 2),
-                'abdominais': abdominais,
+                'abdominais': int(abdominais),
                 'cluster': cluster
             })
         
         return dados
     
-    def generateData(self, returnType: str = 'df') -> pd.DataFrame | list:
+    
+    def generateData(self, returnType: Literal['df', 'list', 'athletes'] = 'df') -> pd.DataFrame | List[Dict] | List[Athlete]:
         """
         Gera o dataset completo com todos os clusters.
         
         Args:
-            returnType: 'df' para DataFrame, 'list' para lista de dicts, 'csv' para salvar em arquivo
+            returnType: 
+                - 'df': retorna pandas DataFrame
+                - 'list': retorna lista de dicionários
+                - 'athletes': retorna lista de objetos Athlete
             
         Returns:
-            DataFrame ou lista dependendo de returnType
+            Dados gerados no formato especificado
         """
-        elite = self.gerar_dados_cluster(
+        # Elite (25%)
+        elite = self.gerarDadosCluster(
             n=int(self.nAthletes * 0.25),
-            sexo_dist=[0.6, 0.4],
-            altura_range=(1.65, 1.85),
-            envergadura_range=(1.70, 1.95),
-            arremesso_range=(10, 14),
-            salto_range=(2.6, 3.2),
-            abdominais_range=(55, 75),
-            cluster='Elite'
+            sexoDist=[0.6, 0.4],
+            alturaRange=(165, 185),
+            envergaduraRange=(170, 195),
+            arremessoRange=(10, 14),
+            saltoRange=(2.6, 3.2),
+            abdominaisRange=(55, 75),
+            cluster=3
         )
-
-        competitivo = self.gerar_dados_cluster(
+        
+        # Competitivo (25%)
+        competitivo = self.gerarDadosCluster(
             n=int(self.nAthletes * 0.25),
-            sexo_dist=[0.55, 0.45],
-            altura_range=(1.60, 1.82),
-            envergadura_range=(1.65, 1.90),
-            arremesso_range=(7.5, 10.5),
-            salto_range=(2.1, 2.7),
-            abdominais_range=(40, 58),
-            cluster='Competitivo'
+            sexoDist=[0.55, 0.45],
+            alturaRange=(160, 182),
+            envergaduraRange=(165, 190),
+            arremessoRange=(7.5, 10.5),
+            saltoRange=(2.1, 2.7),
+            abdominaisRange=(40, 58),
+            cluster=2
         )
-
-        intermediario = self.gerar_dados_cluster(
+        
+        # Intermediário (25%)
+        intermediario = self.gerarDadosCluster(
             n=int(self.nAthletes * 0.25),
-            sexo_dist=[0.5, 0.5],
-            altura_range=(1.58, 1.80),
-            envergadura_range=(1.60, 1.85),
-            arremesso_range=(5.5, 8.0),
-            salto_range=(1.7, 2.3),
-            abdominais_range=(28, 45),
-            cluster='Intermediário'
+            sexoDist=[0.5, 0.5],
+            alturaRange=(158, 180),
+            envergaduraRange=(160, 185),
+            arremessoRange=(5.5, 8.0),
+            saltoRange=(1.7, 2.3),
+            abdominaisRange=(28, 45),
+            cluster=1
         )
-
-        iniciante = self.gerar_dados_cluster(
+        
+        # Iniciante (25%)
+        iniciante = self.gerarDadosCluster(
             n=int(self.nAthletes * 0.25),
-            sexo_dist=[0.5, 0.5],
-            altura_range=(1.55, 1.78),
-            envergadura_range=(1.58, 1.82),
-            arremesso_range=(3.5, 6.0),
-            salto_range=(1.2, 1.8),
-            abdominais_range=(15, 32),
-            cluster='Iniciante'
+            sexoDist=[0.5, 0.5],
+            alturaRange=(155, 178),
+            envergaduraRange=(158, 182),
+            arremessoRange=(3.5, 6.0),
+            saltoRange=(1.2, 1.8),
+            abdominaisRange=(15, 32),
+            cluster=0
         )
         
         # Combinar todos os dados
-        todos_dados = elite + competitivo + intermediario + iniciante
+        todosDados = elite + competitivo + intermediario + iniciante
+        
+        # Embaralhar
+        random.shuffle(todosDados)
         
         if returnType == 'list':
-            return todos_dados
+            return todosDados
         
-        df = pd.DataFrame(todos_dados)
+        elif returnType == 'athletes':
+            # Converter para objetos Athlete
+            athletes = []
+            for data in todosDados:
+                athlete = Athlete(
+                    nome=data['nome'],
+                    dataNascimento=data['dataNascimento'],
+                    sexo=data['sexo'],
+                    altura=data['altura'],
+                    envergadura=data['envergadura'],
+                    arremesso=data['arremesso'],
+                    saltoHorizontal=data['saltoHorizontal'],
+                    abdominais=data['abdominais']
+                )
+                athlete.cluster = data['cluster']
+                athletes.append(athlete)
+            
+            return athletes
         
-        df = df.sample(frac=1, random_state=42).reset_index(drop=True)
-        
-        if returnType == 'csv':
-            df.to_csv('dataset_athletes.csv', index=False)
-            
-            print("=" * 70)
-            print("DATASET CRIADO COM SUCESSO!")
-            print("=" * 70)
-            print(f"\nTotal de exemplos: {len(df)}")
-            print("\nDistribuição por cluster:")
-            print(df['cluster'].value_counts().sort_index())
-            print("\nDistribuição por sexo:")
-            print(df['sexo'].value_counts())
-            print("\nPrimeiras linhas do dataset:")
-            print(df.head(10))
-            print("\nEstatísticas descritivas por cluster:")
-            print(df.groupby('cluster')[['altura', 'envergadura', 'arremesso', 
-                                         'saltoHorizontal', 'abdominais']].mean().round(2))
-            print("\n✓ Arquivo salvo: dataset_athletes.csv")
-            print("=" * 70)
-            
-            # Salvar também arquivos separados por cluster
-            for cluster in ['Elite', 'Competitivo', 'Intermediário', 'Iniciante']:
-                df_cluster = df[df['cluster'] == cluster]
-                filename = f'dataset_{cluster.lower()}.csv'
-                df_cluster.to_csv(filename, index=False)
-                print(f"✓ Arquivo salvo: {filename}")
-            
+        else:  # returnType == 'df'
+            df = pd.DataFrame(todosDados)
             return df
+    
+    
+    def saveToCSV(self, filepath: str = 'dataset_athletes.csv') -> Tuple[bool, str]:
+        """
+        Gera dados e salva em arquivo CSV.
         
-        return df
+        Args:
+            filepath: Caminho do arquivo
+            
+        Returns:
+            Tupla (sucesso, mensagem)
+        """
+        try:
+            df = self.generateData(returnType='df')
+            
+            # Converter dataNascimento para string
+            df['dataNascimento'] = df['dataNascimento'].dt.strftime('%Y-%m-%d')
+            
+            df.to_csv(filepath, index=False)
+            
+            # Estatísticas
+            stats = f"""
+═══════════════════════════════════════════════════════════════════
+DATASET CRIADO COM SUCESSO!
+═══════════════════════════════════════════════════════════════════
+
+Total de exemplos: {len(df)}
+
+Distribuição por cluster:
+{df['cluster'].value_counts().sort_index()}
+
+Distribuição por sexo:
+{df['sexo'].value_counts()}
+
+Estatísticas descritivas:
+{df[['altura', 'envergadura', 'arremesso', 'saltoHorizontal', 'abdominais']].describe().round(2)}
+
+✓ Arquivo salvo: {filepath}
+═══════════════════════════════════════════════════════════════════
+            """
+            
+            return True, stats
+            
+        except Exception as e:
+            return False, f"Erro ao salvar CSV: {str(e)}"
+    
+    
+    def saveToDatabase(self, clearExisting: bool = False) -> Tuple[bool, str]:
+        """
+        Gera dados e salva diretamente no banco de dados.
+        
+        Args:
+            clearExisting: Se True, limpa dados existentes antes de inserir
+            
+        Returns:
+            Tupla (sucesso, mensagem)
+        """
+        try:
+            with Config.app.app_context():
+                # Limpar dados existentes se solicitado
+                if clearExisting:
+                    self.session.query(Athlete).delete()
+                    self.session.commit()
+                
+                # Gerar atletas
+                athletes = self.generateData(returnType='athletes')
+                
+                # Inserir no banco
+                for athlete in athletes:
+                    self.session.add(athlete)
+                
+                self.session.commit()
+                
+                # Estatísticas
+                total = len(athletes)
+                por_cluster = {}
+                for athlete in athletes:
+                    cluster_name = self.clusterNames[athlete.cluster]
+                    por_cluster[cluster_name] = por_cluster.get(cluster_name, 0) + 1
+                
+                mensagem = f"""
+✓ {total} atletas inseridos no banco de dados
+
+Distribuição por cluster:
+{chr(10).join(f'  {k}: {v} atletas' for k, v in sorted(por_cluster.items()))}
+                """
+                
+                return True, mensagem
+            
+        except Exception as e:
+            self.session.rollback()
+            return False, f"Erro ao salvar no banco: {str(e)}"
+    
+    
+    def generateSingleAthlete(self, cluster: int = None, sexo: str = None) -> Athlete:
+        """
+        Gera um único atleta com características específicas.
+        
+        Args:
+            cluster: Cluster desejado (0-3). Se None, escolhe aleatoriamente
+            sexo: 'M' ou 'F'. Se None, escolhe aleatoriamente
+            
+        Returns:
+            Objeto Athlete gerado
+        """
+        if cluster is None:
+            cluster = random.randint(0, 3)
+        
+        if sexo is None:
+            sexo = random.choice(['M', 'F'])
+        
+        # Parâmetros por cluster
+        params = {
+            3: {  # Elite
+                'alturaRange': (165, 185),
+                'envergaduraRange': (170, 195),
+                'arremessoRange': (10, 14),
+                'saltoRange': (2.6, 3.2),
+                'abdominaisRange': (55, 75)
+            },
+            2: {  # Competitivo
+                'alturaRange': (160, 182),
+                'envergaduraRange': (165, 190),
+                'arremessoRange': (7.5, 10.5),
+                'saltoRange': (2.1, 2.7),
+                'abdominaisRange': (40, 58)
+            },
+            1: {  # Intermediário
+                'alturaRange': (158, 180),
+                'envergaduraRange': (160, 185),
+                'arremessoRange': (5.5, 8.0),
+                'saltoRange': (1.7, 2.3),
+                'abdominaisRange': (28, 45)
+            },
+            0: {  # Iniciante
+                'alturaRange': (155, 178),
+                'envergaduraRange': (158, 182),
+                'arremessoRange': (3.5, 6.0),
+                'saltoRange': (1.2, 1.8),
+                'abdominaisRange': (15, 32)
+            }
+        }
+        
+        p = params[cluster]
+        
+        # Gerar dados
+        nome = self.gerarNome(sexo)
+        dataNascimento = self.gerarDataNascimento()
+        
+        if sexo == 'M':
+            altura = np.random.uniform(*p['alturaRange'])
+            envergadura = altura * np.random.uniform(1.0, 1.06)
+            arremesso = np.random.uniform(*p['arremessoRange'])
+            salto = np.random.uniform(*p['saltoRange'])
+            abdominais = np.random.randint(*p['abdominaisRange'])
+        else:
+            altura = np.random.uniform(
+                p['alturaRange'][0] * 0.92,
+                p['alturaRange'][1] * 0.95
+            )
+            envergadura = altura * np.random.uniform(1.0, 1.05)
+            arremesso = np.random.uniform(
+                p['arremessoRange'][0] * 0.7,
+                p['arremessoRange'][1] * 0.75
+            )
+            salto = np.random.uniform(
+                p['saltoRange'][0] * 0.8,
+                p['saltoRange'][1] * 0.85
+            )
+            abdominais = np.random.randint(
+                int(p['abdominaisRange'][0] * 0.85),
+                int(p['abdominaisRange'][1] * 0.9)
+            )
+        
+        # Criar atleta
+        athlete = Athlete(
+            nome=nome,
+            dataNascimento=dataNascimento,
+            sexo=sexo,
+            altura=round(altura, 2),
+            envergadura=round(envergadura, 2),
+            arremesso=round(arremesso, 2),
+            saltoHorizontal=round(salto, 2),
+            abdominais=int(abdominais)
+        )
+        
+        athlete.cluster = cluster
+        
+        return athlete
+    
+    
+    def getStatistics(self) -> Dict:
+        """
+        Retorna estatísticas sobre os dados que seriam gerados.
+        
+        Returns:
+            Dicionário com estatísticas
+        """
+        df = self.generateData(returnType='df')
+        
+        stats = {
+            'total': len(df),
+            'por_cluster': df['cluster'].value_counts().to_dict(),
+            'por_sexo': df['sexo'].value_counts().to_dict(),
+            'medias_por_cluster': df.groupby('cluster')[
+                ['altura', 'envergadura', 'arremesso', 'saltoHorizontal', 'abdominais']
+            ].mean().round(2).to_dict(),
+            'desvios_por_cluster': df.groupby('cluster')[
+                ['altura', 'envergadura', 'arremesso', 'saltoHorizontal', 'abdominais']
+            ].std().round(2).to_dict()
+        }
+        
+        return stats
+
+
+# Função de conveniência para uso rápido
+def generateQuickDataset(n_athletes: int = 160, save_to_db: bool = True) -> Tuple[bool, str]:
+    """
+    Função de conveniência para gerar dataset rapidamente.
+    
+    Args:
+        n_athletes: Número de atletas
+        save_to_db: Se True, salva no banco. Se False, salva em CSV
+        
+    Returns:
+        Tupla (sucesso, mensagem)
+    """
+    generator = DataGenerator(nAthletes=n_athletes)
+    
+    if save_to_db:
+        return generator.saveToDatabase(clearExisting=False)
+    else:
+        return generator.saveToCSV()
+
+
+# Script executável
+if __name__ == '__main__':
+    print("=" * 70)
+    print("GERADOR DE DADOS SINTÉTICOS - TALENT SCOUT")
+    print("=" * 70)
+    print()
+    
+    # Opções
+    print("Opções:")
+    print("1. Gerar e salvar em CSV")
+    print("2. Gerar e salvar no banco de dados")
+    print("3. Gerar e salvar em ambos")
+    print()
+    
+    opcao = input("Escolha uma opção (1-3): ").strip()
+    n_athletes = input("Número de atletas (padrão 160): ").strip()
+    n_athletes = int(n_athletes) if n_athletes else 160
+    
+    generator = DataGenerator(nAthletes=n_athletes)
+    
+    if opcao == '1':
+        success, msg = generator.saveToCSV()
+        print(msg)
+    
+    elif opcao == '2':
+        clear = input("Limpar dados existentes? (s/N): ").strip().lower() == 's'
+        success, msg = generator.saveToDatabase(clearExisting=clear)
+        print(msg)
+    
+    elif opcao == '3':
+        # CSV
+        success1, msg1 = generator.saveToCSV()
+        print(msg1)
+        
+        # Banco
+        clear = input("Limpar dados existentes no banco? (s/N): ").strip().lower() == 's'
+        success2, msg2 = generator.saveToDatabase(clearExisting=clear)
+        print(msg2)
+    
+    else:
+        print("Opção inválida!")
