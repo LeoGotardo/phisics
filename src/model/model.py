@@ -1,15 +1,15 @@
-import  sys, sys, pandas as pd
-
+import sys, pandas as pd
+from typing import Tuple, List, Dict, Literal
 
 from src.model.elos.csvImportElo import CSVImportElo
 from src.model.elos.csvExportElo import CSVExportElo
 from src.model.elos.viewDataElo import ViewDataElo
 from src.model.elos.eloManager import EloManager
-from typing import Tuple, List, Dict, Literal
 from src.model.athleteModel import Athlete
 from src.model.knnModel import KNNModel
 from src.config import Config
 from sqlalchemy import func
+from icecream import ic
 
         
 class Model:
@@ -33,33 +33,102 @@ class Model:
             self.db.create_all()
   
   
-    def importCSV(self, file: bytes):
-        elo = EloManager(CSVImportElo())
+    def loadCSVData(self, file: bytes) -> Tuple[Literal[True, False, -1], str]:
+        """
+        Carrega dados de arquivo CSV, valida e insere no banco.
         
-        try:
-            athleteList = elo.startElo(file)
-            success = self.createAthletes(athleteList, rowData=False)
+        Args:
+            file: Bytes do arquivo CSV
             
-            if not success:
-                return -1, "Erro ao salvar atletas no banco de dados"
-        except Exception as e:
-            return -1, str(f'{type(e).__name__}: {e} in line {sys.exc_info()[-1].tb_lineno} in file {sys.exc_info()[-1].tb_frame.f_code.co_filename}')
-        
-        return athleteList
-    
-    
-    def exportCSV(self, fullData: bool = False, athletesID: list[str] = None, allAthletes: bool = False) -> tuple[bool, bytes] | tuple[bool, dict]:
-        elo = EloManager(CSVExportElo())
-        
+        Returns:
+            Tupla (status, mensagem)
+        """
         try:
-            if not allAthletes and athletesID != None:
-                file = elo.startElo(athetesID=athletesID, fullData=fullData)
-            else:
-                file = elo.startElo(fullData=fullData)
+            # Criar manager do elo de importação
+            elo = EloManager(CSVImportElo())
+            
+            # Processar CSV através da cadeia
+            athletesList = elo.startElo(file)
+            
+            if not athletesList or len(athletesList) == 0:
+                return False, 'Nenhum atleta válido encontrado no CSV'
+            
+            # Inserir atletas no banco
+            with Config.app.app_context():
+                for athlete in athletesList:
+                    self.session.add(athlete)
+                
+                self.session.commit()
+            
+            # Verificar se precisa treinar/retreinar o modelo KNN
+            total_athletes = self.session.query(Athlete).count()
+            
+            if total_athletes >= 20:
+                # Retreinar modelo com novos dados
+                train_status, train_msg = self.trainKNNModel(forceRetrain=True)
+                
+                if train_status:
+                    return True, f'{len(athletesList)} atletas importados e modelo retreinado com sucesso!'
+                else:
+                    return True, f'{len(athletesList)} atletas importados (aviso: {train_msg})'
+            
+            return True, f'{len(athletesList)} atletas importados com sucesso!'
+            
+        except ValueError as e:
+            # Erros de validação
+            return False, str(e)
+            
         except Exception as e:
-            return -1, str(f'{type(e).__name__}: {e} in line {sys.exc_info()[-1].tb_lineno} in file {sys.exc_info()[-1].tb_frame.f_code.co_filename}')
+            # Rollback em caso de erro
+            self.session.rollback()
+            
+            error_msg = (f'{type(e).__name__}: {e} '
+                        f'in line {sys.exc_info()[-1].tb_lineno} '
+                        f'in file {sys.exc_info()[-1].tb_frame.f_code.co_filename}')
+            return -1, error_msg
+    
+    
+    def exportData(self, fullData: bool = True, athletesIds: list[str] = None) -> Tuple[Literal[True, False, -1], bytes | str]:
+        """
+        Exporta dados dos atletas em formato ZIP (CSV + gráficos) ou apenas CSV.
         
-        return True, file
+        Args:
+            fullData: Se True, exporta ZIP completo. Se False, apenas CSV
+            athletesIds: Lista de IDs específicos para exportar (None = todos)
+            
+        Returns:
+            Tupla (status, dados_ou_mensagem)
+        """
+        try:
+            # Criar manager do elo de exportação
+            exportElo = CSVExportElo()
+            
+            # Buscar atletas
+            athletes = exportElo.getAthletes(athletesIds)
+            
+            if len(athletes) == 0:
+                return False, 'Não há atletas cadastrados para exportar'
+            
+            # Converter para DataFrame
+            df = exportElo.convertAthletesData(athletes)
+            
+            if not fullData:
+                # Exportar apenas CSV
+                csv_data = exportElo.generateCSV(df)
+                return True, csv_data
+            
+            # Exportar pacote completo (CSV + gráficos + README)
+            csv_data = exportElo.generateCSV(df)
+            graphs = exportElo.generateGraphs(df)
+            zip_data = exportElo.generateZip(csv_data, graphs, includeReadme=True)
+            
+            return True, zip_data
+            
+        except Exception as e:
+            error_msg = (f'{type(e).__name__}: {e} '
+                        f'in line {sys.exc_info()[-1].tb_lineno} '
+                        f'in file {sys.exc_info()[-1].tb_frame.f_code.co_filename}')
+            return -1, error_msg
  
  
     def trainKNNModel(self, forceRetrain: bool = False) -> Tuple[bool, str]:
@@ -365,8 +434,6 @@ class Model:
                                 "abdominMed": self.session.query(Athlete).filter(Athlete.cluster == 'Iniciante').with_entities(func.avg(Athlete.abdominais)).scalar()
                                 }
 
-            
-
             info = {
                 'totalInfo': totalInfo,
                 'clusterInfo': {
@@ -426,7 +493,7 @@ class Model:
                     'pagination': {
                         'currentPage': currentPage,
                         'totalPages': totalPages,
-                            'total': paginatedResults.total,
+                        'total': paginatedResults.total,
                         'perPage': paginatedResults.per_page,
                         'hasPrev': paginatedResults.has_prev,
                         'hasNext': paginatedResults.has_next,
@@ -477,6 +544,34 @@ class Model:
             error_msg = (f'{type(e).__name__}: {e} '
                         f'in line {sys.exc_info()[-1].tb_lineno} '
                         f'in file {sys.exc_info()[-1].tb_frame.f_code.co_filename}')
+            return -1, error_msg
+    
+    
+    def putAthlete(self, athleteData: dict) -> Tuple[Literal[True, False, -1], str]:
+        """
+        Cria um novo atleta no banco de dados.
+        
+        Args:
+            athleteData: Dicionário com dados do atleta
+            
+        Returns:
+            Tupla (status, mensagem)
+        """
+        try:
+            # Criar objeto Athlete
+            athlete = Athlete(**athleteData)
+            ic(athleteData)
+            
+            # Adicionar ao banco
+            self.session.add(athlete)
+            self.session.commit()
+            
+            return True, f'Atleta {athlete.nome} cadastrado com sucesso!'
+            
+        except Exception as e:
+            self.session.rollback()
+            error_msg = (f'{type(e).__name__}: {e} '
+                        f'in line {sys.exc_info()[-1].tb_lineno}')
             return -1, error_msg
     
     

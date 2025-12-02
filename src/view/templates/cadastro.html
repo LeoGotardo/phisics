@@ -5,7 +5,7 @@
 
 <!-- CADASTRO -->
 <div id="cadastro" class="screen">
-  <form id="athleteForm" method="post">
+  <form id="athleteForm" action="{{ url_for('renderCadastro') }}" method="post">
     <div class="form-section">
       <h3>Dados Pessoais</h3>
       <div class="form-grid">
@@ -34,11 +34,7 @@
       <h3>Antropometria</h3>
       <div class="form-grid">
         <div class="form-group">
-          <label>Massa Corporal (kg)</label>
-          <input type="number" id="massaCorporal" step="0.1" required />
-        </div>
-        <div class="form-group">
-          <label>altura (cm)</label>
+          <label>Altura (cm)</label>
           <input type="number" id="altura" step="0.1" required />
         </div>
         <div class="form-group">
@@ -53,7 +49,7 @@
       <div class="form-grid">
         <div class="form-group">
           <label>Arremesso (cm)</label>
-          <input type="number" id="medicineBall" step="0.1" required />
+          <input type="number" id="arremesso" step="0.1" required />
         </div>
         <div class="form-group">
           <label>Salto Horizontal (cm)</label>
@@ -82,162 +78,302 @@
 {{ super() }}
 
 <script>
-  function loadCSV() {
+function loadCSV() {
     // Criar o overlay do dialog
     const overlay = document.createElement("div");
     overlay.style.cssText = `
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background: rgba(0, 0, 0, 0.5);
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    z-index: 1000;
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.7);
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        z-index: 1000;
+        backdrop-filter: blur(4px);
     `;
 
     // Criar o dialog
     const dialog = document.createElement("div");
     dialog.style.cssText = `
-    background: white;
-    padding: 30px;
-    border-radius: 8px;
-    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-    max-width: 400px;
-    width: 90%;
+        background: #1a1a1a;
+        padding: 30px;
+        border-radius: 12px;
+        box-shadow: 0 20px 25px -5px rgb(0 0 0 / 0.5);
+        max-width: 500px;
+        width: 90%;
+        border: 1px solid #333;
     `;
 
     // Conteúdo do dialog
     dialog.innerHTML = `
-    <h2 style="margin-top: 0; color: #333;">Importar arquivo CSV</h2>
-    <p style="color: #666; margin-bottom: 20px;">Selecione um arquivo CSV para importar</p>
+        <h2 style="margin-top: 0; color: #fff; font-size: 1.5em;">📊 Importar arquivo CSV</h2>
+        <p style="color: #aaa; margin-bottom: 20px; font-size: 0.95em;">
+            Selecione um arquivo CSV com os dados dos atletas
+        </p>
 
-    <input type="file" id="csvFileInput" accept=".csv" style="
-        width: 100%;
-        padding: 10px;
-        margin-bottom: 20px;
-        border: 2px dashed #ccc;
-        border-radius: 4px;
-        cursor: pointer;
-    ">
+        <div style="
+            border: 2px dashed #444;
+            border-radius: 8px;
+            padding: 30px;
+            text-align: center;
+            margin-bottom: 20px;
+            background: #0a0a0a;
+            transition: all 0.3s;
+            cursor: pointer;
+        " id="dropZone">
+            <i class="fas fa-cloud-upload-alt" style="font-size: 3em; color: #666; margin-bottom: 15px;"></i>
+            <p style="color: #888; margin: 10px 0;">
+                Clique para selecionar ou arraste o arquivo aqui
+            </p>
+            <input type="file" id="csvFileInput" accept=".csv" style="display: none;">
+        </div>
 
-    <div style="display: flex; gap: 10px; justify-content: flex-end;">
-        <button id="cancelarBtn" style="
-        padding: 10px 20px;
-        border: 1px solid #ccc;
-        background: white;
-        border-radius: 4px;
-        cursor: pointer;
-        ">Cancelar</button>
-        
-        <button id="importarBtn" style="
-        padding: 10px 20px;
-        border: none;
-        background: #007bff;
-        color: white;
-        border-radius: 4px;
-        cursor: pointer;
-        ">Importar</button>
-    </div>
+        <div id="fileInfo" style="
+            display: none;
+            background: #111;
+            border: 1px solid #333;
+            border-radius: 6px;
+            padding: 15px;
+            margin-bottom: 20px;
+        ">
+            <div style="display: flex; align-items: center; gap: 10px;">
+                <i class="fas fa-file-csv" style="font-size: 2em; color: #10b981;"></i>
+                <div style="flex: 1;">
+                    <div id="fileName" style="color: #fff; font-weight: 500; margin-bottom: 4px;"></div>
+                    <div id="fileSize" style="color: #888; font-size: 0.85em;"></div>
+                </div>
+                <button id="removeFile" style="
+                    background: transparent;
+                    border: none;
+                    color: #ef4444;
+                    cursor: pointer;
+                    font-size: 1.2em;
+                    padding: 5px;
+                ">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+        </div>
+
+        <div id="progressBar" style="
+            display: none;
+            background: #111;
+            border-radius: 6px;
+            height: 8px;
+            overflow: hidden;
+            margin-bottom: 15px;
+        ">
+            <div id="progress" style="
+                background: linear-gradient(90deg, #4a9eff, #10b981);
+                height: 100%;
+                width: 0%;
+                transition: width 0.3s;
+            "></div>
+        </div>
+
+        <div id="progressText" style="
+            display: none;
+            text-align: center;
+            color: #888;
+            font-size: 0.9em;
+            margin-bottom: 15px;
+        "></div>
+
+        <div style="display: flex; gap: 10px; justify-content: flex-end;">
+            <button id="cancelarBtn" class="btn btn-secondary">
+                Cancelar
+            </button>
+            
+            <button id="importarBtn" class="btn btn-primary" disabled>
+                <i class="fas fa-upload"></i> Importar
+            </button>
+        </div>
+
+        <div style="
+            margin-top: 20px;
+            padding: 15px;
+            background: #0a0a0a;
+            border: 1px solid #333;
+            border-radius: 6px;
+        ">
+            <p style="color: #888; font-size: 0.85em; margin: 0;">
+                <strong style="color: #fff;">ℹ️ Formato esperado:</strong><br>
+                O CSV deve conter as colunas: nome, dataNascimento, sexo, altura, envergadura, arremesso, saltoHorizontal, abdominais
+            </p>
+        </div>
     `;
 
-    function fecharDialog() {
-    document.body.removeChild(overlay);
-  }
+    overlay.appendChild(dialog);
+    document.body.appendChild(overlay);
 
-  // Mostrar informações do arquivo selecionado
-  document.getElementById("csvFileInput").addEventListener("change", (e) => {
-    const file = e.target.files[0];
-    if (file) {
-      document.getElementById("fileInfo").style.display = "block";
-      document.getElementById("fileName").textContent = 
-        `${file.name} (${(file.size / 1024).toFixed(2)} KB)`;
-    }
-  });
-
-  // Event listeners
-  document.getElementById("cancelarBtn").addEventListener("click", fecharDialog);
-
-  document.getElementById("importarBtn").addEventListener("click", async () => {
+    // Elementos
     const fileInput = document.getElementById("csvFileInput");
-    const file = fileInput.files[0];
-
-    if (!file) {
-      alert("Por favor, selecione um arquivo CSV");
-      return;
-    }
-
-    // Validar extensão
-    if (!file.name.toLowerCase().endsWith('.csv')) {
-      alert("Por favor, selecione apenas arquivos CSV");
-      return;
-    }
-
-    // Criar FormData com o nome 'csvFile' que o backend espera
-    const formData = new FormData();
-    formData.append('csvFile', file);  // IMPORTANTE: 'csvFile' deve ser o nome esperado
-
-    // Desabilitar botões e mostrar progresso
+    const dropZone = document.getElementById("dropZone");
+    const fileInfo = document.getElementById("fileInfo");
     const importarBtn = document.getElementById("importarBtn");
     const cancelarBtn = document.getElementById("cancelarBtn");
-    importarBtn.disabled = true;
-    cancelarBtn.disabled = true;
-    importarBtn.textContent = "Enviando...";
-    
-    document.getElementById("progressBar").style.display = "block";
-    document.getElementById("progress").style.width = "30%";
+    const removeFileBtn = document.getElementById("removeFile");
+    const progressBar = document.getElementById("progressBar");
+    const progressText = document.getElementById("progressText");
 
-    try {
-      // Enviar para o backend
-      const response = await fetch('/loadCSVData', {
-        method: 'POST',
-        body: formData
-        // Não adicionar Content-Type, o browser define automaticamente com boundary
-      });
+    let selectedFile = null;
 
-      // Atualizar progresso
-      document.getElementById("progress").style.width = "70%";
+    // Função para fechar dialog
+    function fecharDialog() {
+        document.body.removeChild(overlay);
+    }
 
-      // O backend renderiza templates, então precisamos verificar o status
-      if (response.ok) {
-        // Completar barra de progresso
-        document.getElementById("progress").style.width = "100%";
-        document.getElementById("progressText").textContent = "Concluído! Redirecionando...";
+    // Click na drop zone
+    dropZone.addEventListener("click", () => {
+        fileInput.click();
+    });
+
+    // Drag & Drop
+    dropZone.addEventListener("dragover", (e) => {
+        e.preventDefault();
+        dropZone.style.borderColor = "#4a9eff";
+        dropZone.style.background = "#0f0f1f";
+    });
+
+    dropZone.addEventListener("dragleave", (e) => {
+        e.preventDefault();
+        dropZone.style.borderColor = "#444";
+        dropZone.style.background = "#0a0a0a";
+    });
+
+    dropZone.addEventListener("drop", (e) => {
+        e.preventDefault();
+        dropZone.style.borderColor = "#444";
+        dropZone.style.background = "#0a0a0a";
         
-        // Backend retorna render_template, então fazemos redirect completo
-        setTimeout(() => {
-          window.location.replace('/loadCSVData');
-        }, 500);
-      } else {
-        // Erro no servidor
-        alert('Erro ao importar arquivo. Por favor, tente novamente.');
+        const files = e.dataTransfer.files;
+        if (files.length > 0) {
+            handleFileSelect(files[0]);
+        }
+    });
+
+    // Seleção de arquivo
+    fileInput.addEventListener("change", (e) => {
+        const file = e.target.files[0];
+        if (file) {
+            handleFileSelect(file);
+        }
+    });
+
+    // Processar arquivo selecionado
+    function handleFileSelect(file) {
+        // Validar extensão
+        if (!file.name.toLowerCase().endsWith('.csv')) {
+            alert("Por favor, selecione apenas arquivos CSV");
+            return;
+        }
+
+        selectedFile = file;
+
+        // Mostrar informações do arquivo
+        fileInfo.style.display = "block";
+        dropZone.style.display = "none";
+        document.getElementById("fileName").textContent = file.name;
+        document.getElementById("fileSize").textContent = `${(file.size / 1024).toFixed(2)} KB`;
         
-        // Resetar UI
+        // Habilitar botão de importar
         importarBtn.disabled = false;
-        cancelarBtn.disabled = false;
-        importarBtn.textContent = "Importar";
-        document.getElementById("progressBar").style.display = "none";
-      }
-    } catch (error) {
-      console.error('Erro ao enviar arquivo:', error);
-      alert('Erro de conexão. Por favor, verifique sua internet e tente novamente.');
-      
-      // Resetar UI
-      importarBtn.disabled = false;
-      cancelarBtn.disabled = false;
-      importarBtn.textContent = "Importar";
-      document.getElementById("progressBar").style.display = "none";
     }
-  });
 
-  // Fechar ao clicar fora do dialog
-  overlay.addEventListener("click", (e) => {
-    if (e.target === overlay) {
-      fecharDialog();
-    }
-  });
+    // Remover arquivo
+    removeFileBtn.addEventListener("click", () => {
+        selectedFile = null;
+        fileInput.value = "";
+        fileInfo.style.display = "none";
+        dropZone.style.display = "block";
+        importarBtn.disabled = true;
+    });
+
+    // Cancelar
+    cancelarBtn.addEventListener("click", fecharDialog);
+
+    // Importar
+    importarBtn.addEventListener("click", async () => {
+        if (!selectedFile) {
+            alert("Por favor, selecione um arquivo CSV");
+            return;
+        }
+
+        // Criar FormData
+        const formData = new FormData();
+        formData.append('csvFile', selectedFile);
+
+        // Desabilitar botões
+        importarBtn.disabled = true;
+        cancelarBtn.disabled = true;
+        importarBtn.textContent = "Importando...";
+        
+        // Mostrar progresso
+        progressBar.style.display = "block";
+        progressText.style.display = "block";
+        progressText.textContent = "Enviando arquivo...";
+        document.getElementById("progress").style.width = "30%";
+
+        try {
+            // Enviar para o backend
+            const response = await fetch('/loadCSVData', {
+                method: 'POST',
+                body: formData
+            });
+
+            // Atualizar progresso
+            document.getElementById("progress").style.width = "70%";
+            progressText.textContent = "Processando dados...";
+
+            if (response.ok) {
+                // Sucesso
+                document.getElementById("progress").style.width = "100%";
+                progressText.textContent = "✓ Importação concluída!";
+                progressText.style.color = "#10b981";
+                
+                // Aguardar um pouco e recarregar página
+                setTimeout(() => {
+                    window.location.reload();
+                }, 1500);
+            } else {
+                // Erro do servidor
+                const errorText = await response.text();
+                throw new Error(errorText || 'Erro ao importar arquivo');
+            }
+            
+        } catch (error) {
+            console.error('Erro ao enviar arquivo:', error);
+            
+            // Mostrar erro
+            progressText.textContent = "✗ Erro ao importar";
+            progressText.style.color = "#ef4444";
+            document.getElementById("progress").style.background = "#ef4444";
+            
+            alert(`Erro ao importar CSV:\n${error.message}\n\nVerifique se o formato do arquivo está correto.`);
+            
+            // Resetar UI
+            importarBtn.disabled = false;
+            cancelarBtn.disabled = false;
+            importarBtn.innerHTML = '<i class="fas fa-upload"></i> Importar';
+            
+            setTimeout(() => {
+                progressBar.style.display = "none";
+                progressText.style.display = "none";
+                document.getElementById("progress").style.width = "0%";
+                document.getElementById("progress").style.background = "linear-gradient(90deg, #4a9eff, #10b981)";
+            }, 3000);
+        }
+    });
+
+    // Fechar ao clicar fora do dialog
+    overlay.addEventListener("click", (e) => {
+        if (e.target === overlay) {
+            fecharDialog();
+        }
+    });
 }
 
 document.addEventListener('DOMContentLoaded', function() {

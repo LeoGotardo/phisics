@@ -2,9 +2,7 @@ from flask import Flask, render_template, request, redirect, url_for, flash, Blu
 from src.model.model import Model
 from icecream import ic
 from io import BytesIO
-
 from src.config import Config
-
 import traceback, sys, json
 
 
@@ -90,37 +88,114 @@ class Controller:
         
         
     def loadCSVData(self):
+        """
+        Importa dados de arquivo CSV enviado pelo usuário.
+        Valida, sanitiza e insere os atletas no banco de dados.
+        """
         if request.method == 'POST':
-            status, response = self.model.loadCSVData(request.files['csvFile'])
-            if status == -1:
-                raise Exception(response)
-            if status == True:
-                flash(response, category='success')
-            else:
-                flash(response, category='error')
-            return render_template('cadastro.html')
+            try:
+                # Verificar se arquivo foi enviado
+                if 'csvFile' not in request.files:
+                    flash('Nenhum arquivo foi enviado', category='error')
+                    return redirect(url_for('renderCadastro'))
+                
+                file = request.files['csvFile']
+                
+                # Verificar se arquivo tem nome
+                if file.filename == '':
+                    flash('Arquivo sem nome', category='error')
+                    return redirect(url_for('renderCadastro'))
+                
+                # Verificar extensão
+                if not file.filename.lower().endswith('.csv'):
+                    flash('Apenas arquivos CSV são permitidos', category='error')
+                    return redirect(url_for('renderCadastro'))
+                
+                # Ler o arquivo em bytes
+                file_bytes = file.read()
+                
+                # Processar CSV através do model
+                status, response = self.model.loadCSVData(file_bytes)
+                
+                if status == -1:
+                    raise Exception(response)
+                    
+                if status == True:
+                    flash(f'✓ {response}', category='success')
+                else:
+                    flash(f'⚠ {response}', category='warning')
+                
+                return redirect(url_for('renderCadastro'))
+                
+            except Exception as e:
+                error_msg = f'{type(e).__name__}: {e}'
+                ic(error_msg)
+                flash(f'Erro ao importar CSV: {error_msg}', category='error')
+                return redirect(url_for('renderCadastro'))
         else:
-            return render_template('404.html')
+            return render_template('404.html'), 404
     
     
     def exportData(self):
+        """
+        Exporta dados dos atletas em formato ZIP com CSV e gráficos.
+        """
         if request.method == 'GET':
-            status, info = self.model.exportData()
-            if status == True:
-                return send_file(BytesIO(info), as_attachment=True, attachment_filename='data.csv')
-            if status == -1:
-                raise Exception(info)
-            else:
-                flash(info, category='error')
-                return render_template('exportData.html')
+            try:
+                # Parâmetros opcionais da URL
+                full_data = request.args.get('full_data', 'true').lower() == 'true'
+                athletes_ids = request.args.get('ids', None)
+                
+                if athletes_ids:
+                    athletes_ids = athletes_ids.split(',')
+                
+                # Exportar dados através do model
+                status, result = self.model.exportData(
+                    fullData=full_data,
+                    athletesIds=athletes_ids
+                )
+                
+                if status == True:
+                    # result contém os bytes do arquivo ZIP
+                    return send_file(
+                        BytesIO(result),
+                        mimetype='application/zip',
+                        as_attachment=True,
+                        download_name='talent_scout_export.zip'
+                    )
+                    
+                elif status == False:
+                    flash(result, category='warning')
+                    return redirect(url_for('renderViewPage'))
+                    
+                else:  # status == -1
+                    raise Exception(result)
+                    
+            except Exception as e:
+                error_msg = f'{type(e).__name__}: {e}'
+                ic(error_msg)
+                flash(f'Erro ao exportar dados: {error_msg}', category='error')
+                return redirect(url_for('renderViewPage'))
         else:
-            return render_template('404.html')
+            return render_template('404.html'), 404
         
     
     def createAthlete(self):
         match request.method:
             case 'POST':
-                status, response = self.model.putAthlete(request.form)
+                ic(request.form.listvalues())
+                dataDict = {
+                'nome' : request.form.get('nome'),
+                'dataNascimento' : request.form.get('dataNascimento'),
+                'sexo' : request.form.get('sexo'),
+                'altura' : request.form.get('altura'),
+                'envergadura' : request.form.get('envergadura'),
+                'arremesso' : request.form.get('arremesso'),
+                'saltoHorizontal' : request.form.get('saltoHorizontal'),
+                'abdominais' : request.form.get('abdominais'),
+                }
+                
+                status, response = self.model.putAthlete(dataDict)
                 if status == -1:
                     raise Exception(response)
                 if status == True:
