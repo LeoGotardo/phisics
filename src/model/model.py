@@ -1,5 +1,5 @@
 import sys, pandas as pd
-from typing import Tuple, List, Dict, Literal
+
 
 from src.model.elos.dataAnalysisElo import DataAnalysisElo
 from src.model.elos.dbAnalyticsElo import DBAnalyticsElo
@@ -8,8 +8,10 @@ from src.model.elos.csvExportElo import CSVExportElo
 from src.model.elos.viewDataElo import ViewDataElo
 from src.utils.dataGenerator import DataGenerator
 from src.model.elos.eloManager import EloManager
+from typing import Tuple, List, Dict, Literal
 from src.model.athleteModel import Athlete
 from src.model.knnModel import KNNModel
+from datetime import datetime
 from src.config import Config
 from sqlalchemy import func
 from icecream import ic
@@ -556,7 +558,7 @@ class Model:
             return -1, error_msg
     
     
-    def putAthlete(self, athleteData: dict) -> Tuple[Literal[True, False, -1], str]:
+    def putAthlete(self, athleteData: dict | Athlete) -> Tuple[Literal[True, False, -1], str]:
         """
         Cria um novo atleta no banco de dados.
         
@@ -569,22 +571,27 @@ class Model:
         try:
             athlete = Athlete(**athleteData)
 
-            success, cluster = self.knnModel.predict(athleteData)
+            success, clusterResult = self.knnModel.predict(athleteData)
             if success != True:
-                return -1, cluster
-            athlete.cluster = cluster
+                return -1, clusterResult
+            
+            # clusterResult é um dicionário, extrair apenas o nome do cluster
+            if isinstance(clusterResult, dict):
+                athlete.cluster = clusterResult['cluster']
+            else:
+                athlete.cluster = clusterResult
             
             self.session.add(athlete)
             self.session.commit()
             
-            return True, f'Atleta {athlete.nome} cadastrado com sucesso!'
+            return True, f'Atleta {athlete.nome} cadastrado com sucesso no cluster {athlete.cluster}!'
             
         except Exception as e:
             self.session.rollback()
-            error_msg = (f'{type(e).__name__}: {e} '
+            errorMsg = (f'{type(e).__name__}: {e} '
                         f'in line {sys.exc_info()[-1].tb_lineno}')
-            return -1, error_msg
-    
+            return -1, errorMsg
+            
     
     def createAthletes(self, athletes: list[dict] | list[Athlete], rowData: bool = False) -> bool:
         try:

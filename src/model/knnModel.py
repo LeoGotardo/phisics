@@ -74,15 +74,34 @@ class KNNModel:
         if isinstance(data, list):
             data = pd.DataFrame(data)
         
-        # Converter nomes dos clusters para códigos numéricos
-        if 'cluster' in data.columns:
-            y = data['cluster'].map(self.reverseMapping).values
-        elif 'nivel' in data.columns:
-            y = data['nivel'].map(self.reverseMapping).values
-        else:
+        # Verificar se 'cluster' existe
+        if 'cluster' not in data.columns and 'nivel' not in data.columns:
             raise ValueError("Dados devem conter coluna 'cluster' ou 'nivel'")
         
-        return y
+        # Usar a coluna que existir
+        clusterColumn = 'cluster' if 'cluster' in data.columns else 'nivel'
+        clusterValues = data[clusterColumn]
+        
+        # Se já são numéricos (0-3), retornar direto
+        if pd.api.types.is_numeric_dtype(clusterValues):
+            y = clusterValues.values
+            # Verificar se há NaN
+            if np.any(np.isnan(y)):
+                raise ValueError("Coluna 'cluster' contém valores NaN")
+            return y.astype(int)
+        
+        # Se são strings, mapear para códigos
+        y = clusterValues.map(self.reverseMapping).values
+        
+        # Verificar se há NaN após mapeamento
+        if np.any(pd.isna(y)):
+            uniqueValues = clusterValues.unique()
+            raise ValueError(
+                f"Valores desconhecidos na coluna 'cluster': {uniqueValues}. "
+                f"Valores esperados: {list(self.reverseMapping.keys())} ou {list(self.clusterMapping.keys())}"
+            )
+        
+        return y.astype(int)
     
     
     def fit(self, trainData: pd.DataFrame | List[Dict]) -> Tuple[bool, str]:
@@ -100,7 +119,9 @@ class KNNModel:
             X = self.prepareFeatures(trainData)
             y = self.prepareLabels(trainData)
             
-            print(y)
+            # Verificar se há dados suficientes
+            if len(X) < self.nNeighbors:
+                return False, f"Necessário pelo menos {self.nNeighbors} amostras. Encontradas: {len(X)}"
             
             # Normalizar features
             XScaled = self.scaler.fit_transform(X)
@@ -114,7 +135,7 @@ class KNNModel:
             daviesBouldin = davies_bouldin_score(XScaled, yPred)
             
             # Cross-validation score
-            cvScores = cross_val_score(self.knn, XScaled, y, cv=5)
+            cvScores = cross_val_score(self.knn, XScaled, y, cv=min(5, len(X)))
             
             self.isTrained = True
             
@@ -123,7 +144,7 @@ class KNNModel:
                 f"Amostras de treino: {len(X)}\n"
                 f"Silhouette Score: {silhouette:.3f}\n"
                 f"Davies-Bouldin Index: {daviesBouldin:.3f}\n"
-                f"Acurácia CV (5-fold): {cvScores.mean():.3f} ± {cvScores.std():.3f}"
+                f"Acurácia CV ({min(5, len(X))}-fold): {cvScores.mean():.3f} ± {cvScores.std():.3f}"
             )
             
             return True, mensagem
@@ -271,7 +292,7 @@ class KNNModel:
                     'posicao': i + 1,
                     'indice': int(idx),
                     'distancia': float(dist),
-                    'similaridade': float(1 / (1 + dist))  # Converter distância em similaridade
+                    'similaridade': float(1 / (1 + dist))
                 })
             
             return True, similares
@@ -408,11 +429,12 @@ class KNNModel:
             importance = {}
             for i, featureName in enumerate(self.featureNames):
                 correlation = np.corrcoef(X[:, i], y)[0, 1]
-                importance[featureName] = abs(correlation)  # Valor absoluto da correlação
+                importance[featureName] = abs(correlation)
             
             # Normalizar para somar 1
             total = sum(importance.values())
-            importance = {k: v/total for k, v in importance.items()}
+            if total > 0:
+                importance = {k: v/total for k, v in importance.items()}
             
             # Ordenar por importância
             importance = dict(sorted(importance.items(), key=lambda x: x[1], reverse=True))

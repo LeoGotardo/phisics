@@ -8,23 +8,23 @@
     <div class="metrics">
         <div class="metric-card">
             <div class="label">Total Atletas</div>
-            <div class="value">{{ totalInfo.totalAthletes or "No Data" }}</div>
+            <div class="value">{{ totalInfo.totalAthletes or "0" }}</div>
         </div>
         <div class="metric-card">
             <div class="label">Elite</div>
-            <div class="value">{{ clusterInfo.eliteCluster.count or "No Data" }}</div>
+            <div class="value">{{ clusterInfo.eliteCluster.count or "0" }}</div>
         </div>
         <div class="metric-card">
             <div class="label">Competitivo</div>
-            <div class="value">{{ clusterInfo.competitiveCluster.count or "No Data" }}</div>
+            <div class="value">{{ clusterInfo.competitiveCluster.count or "0" }}</div>
         </div>
         <div class="metric-card">
             <div class="label">Desenvolvimento</div>
-            <div class="value">{{ clusterInfo.intermediateCluster.count or "No Data" }}</div>
+            <div class="value">{{ clusterInfo.intermediateCluster.count or "0" }}</div>
         </div>
         <div class="metric-card">
             <div class="label">Iniciante</div>
-            <div class="value">{{ clusterInfo.beginerCluster.count or "No Data" }}</div>
+            <div class="value">{{ clusterInfo.beginerCluster.count or "0" }}</div>
         </div>
     </div>
 

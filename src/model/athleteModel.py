@@ -1,5 +1,6 @@
 from flask_login import UserMixin
 from src.config import Config
+from datetime import datetime
 
 import uuid
 
@@ -40,6 +41,7 @@ class Athlete(UserMixin, Config.db.Model):
             'arremesso': self.arremesso,
             'saltoHorizontal': self.saltoHorizontal,
             'abdominais': self.abdominais,
-            'cluster': self.cluster
+            'cluster': self.cluster,
+            'idade': int(datetime.now().year - self.dataNascimento.year)
         }
         

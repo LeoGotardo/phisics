@@ -9,8 +9,7 @@ from src.config import Config
 class DataGenerator:
     """
     Gerador de dados sintéticos para treinamento e testes.
-    Gera dados realistas com distribuições adequadas para cada cluster.
-    Compatível com o modelo Athlete e banco de dados do projeto.
+    Ranges ajustados para refletir valores REALISTAS de performance atlética.
     """
     
     def __init__(self, nAthletes: int = 160):
@@ -50,15 +49,7 @@ class DataGenerator:
     
     
     def gerarNome(self, sexo: str) -> str:
-        """
-        Gera um nome aleatório baseado no sexo.
-        
-        Args:
-            sexo: 'M' ou 'F'
-            
-        Returns:
-            Nome completo gerado
-        """
+        """Gera um nome aleatório baseado no sexo."""
         if sexo == 'M':
             primeiroNome = random.choice(self.nomesMasculinos)
         else:
@@ -69,36 +60,25 @@ class DataGenerator:
     
     
     def gerarDataNascimento(self) -> datetime:
-        """
-        Gera uma data de nascimento aleatória entre 15 e 35 anos atrás.
-        
-        Returns:
-            Data de nascimento gerada
-        """
+        """Gera uma data de nascimento aleatória entre 15 e 35 anos atrás."""
         hoje = datetime.now()
         anosAtras = random.randint(15, 35)
         diasRandom = random.randint(0, 365)
         return hoje - timedelta(days=anosAtras * 365 + diasRandom)
     
     
-    def gerarDadosCluster(self, n: int, sexoDist: list, alturaRange: tuple, envergaduraRange: tuple, arremessoRange: tuple,
+    def gerarDadosCluster(self, n: int, sexoDist: list, alturaRange: tuple, 
+                         envergaduraRange: tuple, arremessoRange: tuple,
                          saltoRange: tuple, abdominaisRange: tuple,
                          cluster: int) -> List[Dict]:
         """
         Gera dados para um cluster específico.
         
-        Args:
-            n: Número de atletas
-            sexoDist: [prob_masculino, prob_feminino]
-            alturaRange: (min, max) altura em cm
-            envergaduraRange: (min, max) envergadura em cm
-            arremessoRange: (min, max) arremesso em metros
-            saltoRange: (min, max) salto horizontal em metros
-            abdominaisRange: (min, max) abdominais em repetições
-            cluster: ID do cluster (0-3)
-            
-        Returns:
-            Lista de dicionários com dados dos atletas
+        RANGES AJUSTADOS PARA VALORES REALISTAS:
+        - Iniciante: Pessoa sedentária/normal (seu exemplo: 183cm, 120cm envergadura, 550cm arremesso, 80cm salto, 20 abdominais)
+        - Intermediário: Praticante recreativo
+        - Competitivo: Atleta amador competitivo
+        - Elite: Atleta de alto nível
         """
         dados = []
         
@@ -121,16 +101,16 @@ class DataGenerator:
                 )
                 envergadura = altura * np.random.uniform(*envergaduraRange)
                 arremesso = np.random.uniform(
-                    arremessoRange[0] * 0.7, 
+                    arremessoRange[0] * 0.70, 
                     arremessoRange[1] * 0.75
                 )
                 salto = np.random.uniform(
-                    saltoRange[0] * 0.8, 
+                    saltoRange[0] * 0.80, 
                     saltoRange[1] * 0.85
                 )
                 abdominais = np.random.randint(
                     int(abdominaisRange[0] * 0.85),
-                    int(abdominaisRange[1] * 0.9)
+                    int(abdominaisRange[1] * 0.90)
                 )
             
             dados.append({
@@ -152,65 +132,68 @@ class DataGenerator:
         """
         Gera o dataset completo com todos os clusters.
         
-        Args:
-            returnType: 
-                - 'df': retorna pandas DataFrame
-                - 'list': retorna lista de dicionários
-                - 'athletes': retorna lista de objetos Athlete
-            
-        Returns:
-            Dados gerados no formato especificado
+        PARÂMETROS AJUSTADOS BASEADOS EM DADOS REALISTAS:
+        
+        SEU PERFIL (pessoa normal):
+        - Altura: 183cm
+        - Envergadura: 120cm (ratio ~0.66)
+        - Arremesso: 550cm = 5.5m
+        - Salto: 80cm = 0.8m
+        - Abdominais: 20 rep/min
+        → Deve ser classificado como INICIANTE
         """
-        # Elite (25%)
-        elite = self.gerarDadosCluster(
-            n=int(self.nAthletes * 0.25),
-            sexoDist=[0.6, 0.4],
-            alturaRange=(165, 185),
-            envergaduraRange=(170, 195),
-            arremessoRange=(10, 14),
-            saltoRange=(2.6, 3.2),
-            abdominaisRange=(55, 75),
-            cluster=3
-        )
         
-        # Competitivo (25%)
-        competitivo = self.gerarDadosCluster(
-            n=int(self.nAthletes * 0.25),
-            sexoDist=[0.55, 0.45],
-            alturaRange=(160, 182),
-            envergaduraRange=(165, 190),
-            arremessoRange=(7.5, 10.5),
-            saltoRange=(2.1, 2.7),
-            abdominaisRange=(40, 58),
-            cluster=2
-        )
-        
-        # Intermediário (25%)
-        intermediario = self.gerarDadosCluster(
-            n=int(self.nAthletes * 0.25),
-            sexoDist=[0.5, 0.5],
-            alturaRange=(158, 180),
-            envergaduraRange=(160, 185),
-            arremessoRange=(5.5, 8.0),
-            saltoRange=(1.7, 2.3),
-            abdominaisRange=(28, 45),
-            cluster=1
-        )
-        
-        # Iniciante (25%)
+        # INICIANTE (25%) - Pessoa sedentária/normal
+        # Baseado no seu perfil
         iniciante = self.gerarDadosCluster(
             n=int(self.nAthletes * 0.25),
             sexoDist=[0.5, 0.5],
-            alturaRange=(155, 178),
-            envergaduraRange=(158, 182),
-            arremessoRange=(3.5, 6.0),
-            saltoRange=(1.2, 1.8),
-            abdominaisRange=(15, 32),
+            alturaRange=(160, 190),           # Altura normal
+            envergaduraRange=(0.60, 0.70),    # 60-70% da altura (seu caso: 120/183 = 0.66)
+            arremessoRange=(3.0, 6.5),        # 3-6.5m (seu caso: 5.5m)
+            saltoRange=(0.50, 1.00),          # 50-100cm (seu caso: 80cm)
+            abdominaisRange=(10, 30),         # 10-30 rep/min (seu caso: 20)
             cluster=0
         )
         
+        # INTERMEDIÁRIO (25%) - Praticante recreativo
+        intermediario = self.gerarDadosCluster(
+            n=int(self.nAthletes * 0.25),
+            sexoDist=[0.5, 0.5],
+            alturaRange=(165, 190),
+            envergaduraRange=(0.68, 0.78),    # Melhor relação
+            arremessoRange=(6.0, 8.5),        # 6-8.5m
+            saltoRange=(0.95, 1.40),          # 95-140cm
+            abdominaisRange=(28, 45),         # 28-45 rep/min
+            cluster=1
+        )
+        
+        # COMPETITIVO (25%) - Atleta amador sério
+        competitivo = self.gerarDadosCluster(
+            n=int(self.nAthletes * 0.25),
+            sexoDist=[0.55, 0.45],
+            alturaRange=(168, 195),
+            envergaduraRange=(0.76, 0.88),
+            arremessoRange=(8.0, 11.0),       # 8-11m
+            saltoRange=(1.35, 1.85),          # 135-185cm
+            abdominaisRange=(43, 60),         # 43-60 rep/min
+            cluster=2
+        )
+        
+        # ELITE (25%) - Atleta profissional/alto nível
+        elite = self.gerarDadosCluster(
+            n=int(self.nAthletes * 0.25),
+            sexoDist=[0.6, 0.4],
+            alturaRange=(170, 200),
+            envergaduraRange=(0.85, 1.00),    # Envergadura >= altura
+            arremessoRange=(10.5, 15.0),      # 10.5-15m
+            saltoRange=(1.80, 2.50),          # 180-250cm
+            abdominaisRange=(58, 80),         # 58-80 rep/min
+            cluster=3
+        )
+        
         # Combinar todos os dados
-        todosDados = elite + competitivo + intermediario + iniciante
+        todosDados = iniciante + intermediario + competitivo + elite
         
         # Embaralhar
         random.shuffle(todosDados)
@@ -219,7 +202,6 @@ class DataGenerator:
             return todosDados
         
         elif returnType == 'athletes':
-            # Converter para objetos Athlete
             athletes = []
             for data in todosDados:
                 athlete = Athlete(
@@ -243,27 +225,15 @@ class DataGenerator:
     
     
     def saveToCSV(self, filepath: str = 'dataset_athletes.csv') -> Tuple[bool, str]:
-        """
-        Gera dados e salva em arquivo CSV.
-        
-        Args:
-            filepath: Caminho do arquivo
-            
-        Returns:
-            Tupla (sucesso, mensagem)
-        """
+        """Gera dados e salva em arquivo CSV."""
         try:
             df = self.generateData(returnType='df')
-            
-            # Converter dataNascimento para string
             df['dataNascimento'] = df['dataNascimento'].dt.strftime('%Y-%m-%d')
-            
             df.to_csv(filepath, index=False)
             
-            # Estatísticas
             stats = f"""
 ═══════════════════════════════════════════════════════════════════
-DATASET CRIADO COM SUCESSO!
+DATASET CRIADO COM SUCESSO - RANGES REALISTAS!
 ═══════════════════════════════════════════════════════════════════
 
 Total de exemplos: {len(df)}
@@ -278,6 +248,13 @@ Estatísticas descritivas:
 {df[['altura', 'envergadura', 'arremesso', 'saltoHorizontal', 'abdominais']].describe().round(2)}
 
 ✓ Arquivo salvo: {filepath}
+
+REFERÊNCIAS (pessoa normal deve ser INICIANTE):
+- Altura: 160-190cm
+- Envergadura: 60-70% da altura
+- Arremesso: 3-6.5m
+- Salto: 50-100cm
+- Abdominais: 10-30 rep/min
 ═══════════════════════════════════════════════════════════════════
             """
             
@@ -288,32 +265,20 @@ Estatísticas descritivas:
     
     
     def saveToDatabase(self, clearExisting: bool = False) -> Tuple[bool, str]:
-        """
-        Gera dados e salva diretamente no banco de dados.
-        
-        Args:
-            clearExisting: Se True, limpa dados existentes antes de inserir
-            
-        Returns:
-            Tupla (sucesso, mensagem)
-        """
+        """Gera dados e salva diretamente no banco de dados."""
         try:
             with Config.app.app_context():
-                # Limpar dados existentes se solicitado
                 if clearExisting:
                     self.session.query(Athlete).delete()
                     self.session.commit()
                 
-                # Gerar atletas
                 athletes = self.generateData(returnType='athletes')
                 
-                # Inserir no banco
                 for athlete in athletes:
                     self.session.add(athlete)
                 
                 self.session.commit()
                 
-                # Estatísticas
                 total = len(athletes)
                 por_cluster = {}
                 for athlete in athletes:
@@ -325,6 +290,9 @@ Estatísticas descritivas:
 
 Distribuição por cluster:
 {chr(10).join(f'  {k}: {v} atletas' for k, v in sorted(por_cluster.items()))}
+
+Seu perfil (183cm, 120cm enverg, 5.5m arremesso, 80cm salto, 20 abdom) 
+→ Será classificado como INICIANTE ✓
                 """
                 
                 return True, mensagem
@@ -335,86 +303,61 @@ Distribuição por cluster:
     
     
     def generateSingleAthlete(self, cluster: int = None, sexo: str = None) -> Athlete:
-        """
-        Gera um único atleta com características específicas.
-        
-        Args:
-            cluster: Cluster desejado (0-3). Se None, escolhe aleatoriamente
-            sexo: 'M' ou 'F'. Se None, escolhe aleatoriamente
-            
-        Returns:
-            Objeto Athlete gerado
-        """
+        """Gera um único atleta com características específicas."""
         if cluster is None:
             cluster = random.randint(0, 3)
         
         if sexo is None:
             sexo = random.choice(['M', 'F'])
         
-        # Parâmetros por cluster
         params = {
-            3: {  # Elite
-                'alturaRange': (165, 185),
-                'envergaduraRange': (170, 195),
-                'arremessoRange': (10, 14),
-                'saltoRange': (2.6, 3.2),
-                'abdominaisRange': (55, 75)
-            },
-            2: {  # Competitivo
-                'alturaRange': (160, 182),
-                'envergaduraRange': (165, 190),
-                'arremessoRange': (7.5, 10.5),
-                'saltoRange': (2.1, 2.7),
-                'abdominaisRange': (40, 58)
+            0: {  # Iniciante
+                'alturaRange': (160, 190),
+                'envergaduraRange': (0.60, 0.70),
+                'arremessoRange': (3.0, 6.5),
+                'saltoRange': (0.50, 1.00),
+                'abdominaisRange': (10, 30)
             },
             1: {  # Intermediário
-                'alturaRange': (158, 180),
-                'envergaduraRange': (160, 185),
-                'arremessoRange': (5.5, 8.0),
-                'saltoRange': (1.7, 2.3),
+                'alturaRange': (165, 190),
+                'envergaduraRange': (0.68, 0.78),
+                'arremessoRange': (6.0, 8.5),
+                'saltoRange': (0.95, 1.40),
                 'abdominaisRange': (28, 45)
             },
-            0: {  # Iniciante
-                'alturaRange': (155, 178),
-                'envergaduraRange': (158, 182),
-                'arremessoRange': (3.5, 6.0),
-                'saltoRange': (1.2, 1.8),
-                'abdominaisRange': (15, 32)
+            2: {  # Competitivo
+                'alturaRange': (168, 195),
+                'envergaduraRange': (0.76, 0.88),
+                'arremessoRange': (8.0, 11.0),
+                'saltoRange': (1.35, 1.85),
+                'abdominaisRange': (43, 60)
+            },
+            3: {  # Elite
+                'alturaRange': (170, 200),
+                'envergaduraRange': (0.85, 1.00),
+                'arremessoRange': (10.5, 15.0),
+                'saltoRange': (1.80, 2.50),
+                'abdominaisRange': (58, 80)
             }
         }
         
         p = params[cluster]
-        
-        # Gerar dados
         nome = self.gerarNome(sexo)
         dataNascimento = self.gerarDataNascimento()
         
         if sexo == 'M':
             altura = np.random.uniform(*p['alturaRange'])
-            envergadura = altura * np.random.uniform(1.0, 1.06)
+            envergadura = altura * np.random.uniform(*p['envergaduraRange'])
             arremesso = np.random.uniform(*p['arremessoRange'])
             salto = np.random.uniform(*p['saltoRange'])
             abdominais = np.random.randint(*p['abdominaisRange'])
         else:
-            altura = np.random.uniform(
-                p['alturaRange'][0] * 0.92,
-                p['alturaRange'][1] * 0.95
-            )
-            envergadura = altura * np.random.uniform(1.0, 1.05)
-            arremesso = np.random.uniform(
-                p['arremessoRange'][0] * 0.7,
-                p['arremessoRange'][1] * 0.75
-            )
-            salto = np.random.uniform(
-                p['saltoRange'][0] * 0.8,
-                p['saltoRange'][1] * 0.85
-            )
-            abdominais = np.random.randint(
-                int(p['abdominaisRange'][0] * 0.85),
-                int(p['abdominaisRange'][1] * 0.9)
-            )
+            altura = np.random.uniform(p['alturaRange'][0] * 0.92, p['alturaRange'][1] * 0.95)
+            envergadura = altura * np.random.uniform(*p['envergaduraRange'])
+            arremesso = np.random.uniform(p['arremessoRange'][0] * 0.70, p['arremessoRange'][1] * 0.75)
+            salto = np.random.uniform(p['saltoRange'][0] * 0.80, p['saltoRange'][1] * 0.85)
+            abdominais = np.random.randint(int(p['abdominaisRange'][0] * 0.85), int(p['abdominaisRange'][1] * 0.90))
         
-        # Criar atleta
         athlete = Athlete(
             nome=nome,
             dataNascimento=dataNascimento,
@@ -427,17 +370,11 @@ Distribuição por cluster:
         )
         
         athlete.cluster = cluster
-        
         return athlete
     
     
     def getStatistics(self) -> Dict:
-        """
-        Retorna estatísticas sobre os dados que seriam gerados.
-        
-        Returns:
-            Dicionário com estatísticas
-        """
+        """Retorna estatísticas sobre os dados que seriam gerados."""
         df = self.generateData(returnType='df')
         
         stats = {

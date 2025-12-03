@@ -24,12 +24,12 @@
         <div class="table-header">
             <div>#</div>
             <div>Nome</div>
-            <div>Altura</div>
-            <div>Envergadura</div>
-            <div>Arremesso</div>
-            <div>Salto</div>
-            <div>Abdom</div>
-            <div>Score</div>
+            <div>Altura (cm)</div>
+            <div>Envergadura (cm)</div>
+            <div>Arremesso (cm)</div>
+            <div>Salto (cm)</div>
+            <div>Abdom (rep/min)</div>
+            <div>Score (pontos/100)</div>
             <div>Cluster</div>
         </div>
 
@@ -45,7 +45,7 @@
             <div class="rank">1</div>
             <div class="name">
                 {{ athlete.nome }}
-                <div class="sub">{{ athlete.dataNascimento.year }} anos, {{ athlete.sexo }}</div>
+                <div class="sub">{{ athlete.idade }} anos, {{ athlete.sexo }}</div>
             </div>
             
             <div class="metric">{{ athlete.altura }}</div>
