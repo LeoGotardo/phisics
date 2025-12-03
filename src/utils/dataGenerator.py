@@ -1,10 +1,8 @@
-import pandas as pd
-import numpy as np
-from datetime import datetime, timedelta
-from typing import Tuple, List, Dict, Literal
-import random
+import pandas as pd, numpy as np, random
 
+from typing import Tuple, List, Dict, Literal
 from src.model.athleteModel import Athlete
+from datetime import datetime, timedelta
 from src.config import Config
 
 
@@ -83,8 +81,7 @@ class DataGenerator:
         return hoje - timedelta(days=anosAtras * 365 + diasRandom)
     
     
-    def gerarDadosCluster(self, n: int, sexoDist: list, alturaRange: tuple,
-                         envergaduraRange: tuple, arremessoRange: tuple,
+    def gerarDadosCluster(self, n: int, sexoDist: list, alturaRange: tuple, arremessoRange: tuple,
                          saltoRange: tuple, abdominaisRange: tuple,
                          cluster: int) -> List[Dict]:
         """
@@ -94,7 +91,6 @@ class DataGenerator:
             n: Número de atletas
             sexoDist: [prob_masculino, prob_feminino]
             alturaRange: (min, max) altura em cm
-            envergaduraRange: (min, max) envergadura em cm
             arremessoRange: (min, max) arremesso em metros
             saltoRange: (min, max) salto horizontal em metros
             abdominaisRange: (min, max) abdominais em repetições
@@ -456,66 +452,3 @@ Distribuição por cluster:
         }
         
         return stats
-
-
-# Função de conveniência para uso rápido
-def generateQuickDataset(n_athletes: int = 160, save_to_db: bool = True) -> Tuple[bool, str]:
-    """
-    Função de conveniência para gerar dataset rapidamente.
-    
-    Args:
-        n_athletes: Número de atletas
-        save_to_db: Se True, salva no banco. Se False, salva em CSV
-        
-    Returns:
-        Tupla (sucesso, mensagem)
-    """
-    generator = DataGenerator(nAthletes=n_athletes)
-    
-    if save_to_db:
-        return generator.saveToDatabase(clearExisting=False)
-    else:
-        return generator.saveToCSV()
-
-
-# Script executável
-if __name__ == '__main__':
-    print("=" * 70)
-    print("GERADOR DE DADOS SINTÉTICOS - TALENT SCOUT")
-    print("=" * 70)
-    print()
-    
-    # Opções
-    print("Opções:")
-    print("1. Gerar e salvar em CSV")
-    print("2. Gerar e salvar no banco de dados")
-    print("3. Gerar e salvar em ambos")
-    print()
-    
-    opcao = input("Escolha uma opção (1-3): ").strip()
-    n_athletes = input("Número de atletas (padrão 160): ").strip()
-    n_athletes = int(n_athletes) if n_athletes else 160
-    
-    generator = DataGenerator(nAthletes=n_athletes)
-    
-    if opcao == '1':
-        success, msg = generator.saveToCSV()
-        print(msg)
-    
-    elif opcao == '2':
-        clear = input("Limpar dados existentes? (s/N): ").strip().lower() == 's'
-        success, msg = generator.saveToDatabase(clearExisting=clear)
-        print(msg)
-    
-    elif opcao == '3':
-        # CSV
-        success1, msg1 = generator.saveToCSV()
-        print(msg1)
-        
-        # Banco
-        clear = input("Limpar dados existentes no banco? (s/N): ").strip().lower() == 's'
-        success2, msg2 = generator.saveToDatabase(clearExisting=clear)
-        print(msg2)
-    
-    else:
-        print("Opção inválida!")
