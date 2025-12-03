@@ -100,6 +100,8 @@ class KNNModel:
             X = self.prepareFeatures(trainData)
             y = self.prepareLabels(trainData)
             
+            print(y)
+            
             # Normalizar features
             XScaled = self.scaler.fit_transform(X)
             

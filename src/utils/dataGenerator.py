@@ -81,7 +81,7 @@ class DataGenerator:
         return hoje - timedelta(days=anosAtras * 365 + diasRandom)
     
     
-    def gerarDadosCluster(self, n: int, sexoDist: list, alturaRange: tuple, arremessoRange: tuple,
+    def gerarDadosCluster(self, n: int, sexoDist: list, alturaRange: tuple, envergaduraRange: tuple, arremessoRange: tuple,
                          saltoRange: tuple, abdominaisRange: tuple,
                          cluster: int) -> List[Dict]:
         """
@@ -91,6 +91,7 @@ class DataGenerator:
             n: Número de atletas
             sexoDist: [prob_masculino, prob_feminino]
             alturaRange: (min, max) altura em cm
+            envergaduraRange: (min, max) envergadura em cm
             arremessoRange: (min, max) arremesso em metros
             saltoRange: (min, max) salto horizontal em metros
             abdominaisRange: (min, max) abdominais em repetições
@@ -108,7 +109,7 @@ class DataGenerator:
             
             if sexo == 'M':
                 altura = np.random.uniform(*alturaRange)
-                envergadura = altura * np.random.uniform(1.0, 1.06)
+                envergadura = altura * np.random.uniform(*envergaduraRange)
                 arremesso = np.random.uniform(*arremessoRange)
                 salto = np.random.uniform(*saltoRange)
                 abdominais = np.random.randint(*abdominaisRange)
@@ -118,7 +119,7 @@ class DataGenerator:
                     alturaRange[0] * 0.92, 
                     alturaRange[1] * 0.95
                 )
-                envergadura = altura * np.random.uniform(1.0, 1.05)
+                envergadura = altura * np.random.uniform(*envergaduraRange)
                 arremesso = np.random.uniform(
                     arremessoRange[0] * 0.7, 
                     arremessoRange[1] * 0.75

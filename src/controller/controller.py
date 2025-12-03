@@ -1,8 +1,9 @@
+import traceback, sys, json
+
 from flask import Flask, render_template, request, redirect, url_for, flash, Blueprint, send_file
 from src.model.model import Model
 from src.config import Config
 from datetime import datetime
-import traceback, sys, json
 from icecream import ic
 from io import BytesIO
 

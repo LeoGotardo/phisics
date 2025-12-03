@@ -328,7 +328,7 @@ class CSVExportElo(Elo):
     
     
     def generateZip(self, csvData: bytes, graphs: dict[str, bytes], 
-                   includeReadme: bool = True) -> bytes:
+                   pfd: bytes, includeReadme: bool = True) -> bytes:
         """
         Gera arquivo ZIP com CSV e gráficos.
         
@@ -345,6 +345,7 @@ class CSVExportElo(Elo):
         
         with zipfile.ZipFile(zipBuffer, 'w', zipfile.ZIP_DEFLATED) as zipFile:
             zipFile.writestr('dados/athletes.csv', csvData)
+            zipFile.writestr('relatorio/report.pdf', pfd)
             
             for filename, imageBytes in graphs.items():
                 zipFile.writestr(f'graficos/{filename}', imageBytes)
