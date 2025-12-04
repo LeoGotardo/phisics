@@ -501,14 +501,15 @@ class Model:
     def getAthletes(self, id: str = None, ageRange: tuple[int|int] = None, cluster: str = None, sort: str = 'id', sortOrder: str = 'desc', query: str = None, paginated: bool = False, page: int = 1, per_page: int = 10) -> tuple[bool, list[Athlete]] | tuple[bool, dict]:
         try:
             sortOptions = {
-                'name': Athlete.nome,
-                'data': Athlete.dataNascimento,
-                'sex': Athlete.sexo,
+                'nome': Athlete.nome,
+                'dataNascimento': Athlete.dataNascimento,
+                'sexo': Athlete.sexo,
                 'altura': Athlete.altura,
                 'envergadura': Athlete.envergadura,
                 'arremesso': Athlete.arremesso,
-                'salto': Athlete.saltoHorizontal,
-                'abdominais': Athlete.abdominais
+                'saltoHorizontal': Athlete.saltoHorizontal,
+                'abdominais': Athlete.abdominais,
+                'cluster': Athlete.cluster
             }
             
             sortColumn = sortOptions.get(sort, Athlete.nome)
@@ -516,24 +517,43 @@ class Model:
             with Config.app.app_context():
                 baseQuery = self.session.query(Athlete)
                 
+            # Filtros
             if query:
                 baseQuery = baseQuery.filter(Athlete.nome.like(f'%{query}%'))
+            
             if id:
                 baseQuery = baseQuery.filter(Athlete.id == id)
+            
+            # CORREÇÃO: Filtro de idade usando dataNascimento
             if ageRange:
-                baseQuery = baseQuery.filter(Athlete.dataNascimento >= datetime.strptime(ageRange[0], '%Y-%m-%d'))
-                baseQuery = baseQuery.filter(Athlete.dataNascimento <= datetime.strptime(ageRange[1], '%Y-%m-%d'))
+                data_min, data_max = ageRange
+                baseQuery = baseQuery.filter(
+                    Athlete.dataNascimento.between(data_min, data_max)
+                )
+            
+            # CORREÇÃO: Mapear nomes de cluster para IDs
             if cluster:
-                baseQuery = baseQuery.filter(Athlete.cluster == cluster)
+                cluster_map = {
+                    'elite': 3,
+                    'competitivo': 2,
+                    'intermediário': 1,
+                    'intermediario': 1,  # Aceitar sem acento também
+                    'iniciante': 0
+                }
+                cluster_id = cluster_map.get(cluster.lower())
+                if cluster_id is not None:
+                    baseQuery = baseQuery.filter(Athlete.cluster == cluster_id)
+            
+            # Ordenação
             if sortOrder == 'desc':
                 baseQuery = baseQuery.order_by(sortColumn.desc())
             else:
                 baseQuery = baseQuery.order_by(sortColumn.asc())
-                
+            
             if paginated:
                 paginatedResults = baseQuery.paginate(page=int(page), per_page=int(per_page), error_out=False)
                 
-                athlets = [athlete.dict() for athlete in paginatedResults.items]
+                athletes = [athlete.dict() for athlete in paginatedResults.items]
                 
                 currentPage = paginatedResults.page
                 totalPages = paginatedResults.pages
@@ -542,8 +562,8 @@ class Model:
                 endPage = min(totalPages, currentPage + 5)
                 visiblePages = list(range(startPage, endPage + 1))
                 
-                athlets = {
-                    'items': athlets,
+                result = {
+                    'items': athletes,
                     'pagination': {
                         'currentPage': currentPage,
                         'totalPages': totalPages,
@@ -560,19 +580,20 @@ class Model:
                         'showRightEllipsis': endPage < totalPages - 1
                     },
                     'filters': {
-                        'query': query,
+                        'query': query or '',
                         'sort': sort,
                         'sortOrder': sortOrder,
-                        'cluster': cluster,
-                        'ageRange': ageRange
+                        'cluster': cluster or 'all',
+                        'ageRange': 'all'  # Será sobrescrito no controller
                     }
                 }
                 
             else:
-                athlets = baseQuery.all()
-                athlets = [athlete.dict() for athlete in athlets]
+                athletes = baseQuery.all()
+                result = [athlete.dict() for athlete in athletes]
                 
-            return True, athlets
+            return True, result
+            
         except Exception as e:
             return -1, str(f'{type(e).__name__}: {e} in line {sys.exc_info()[-1].tb_lineno} in file {sys.exc_info()[-1].tb_frame.f_code.co_filename}')
     
@@ -591,11 +612,9 @@ class Model:
         try:
             elo = EloManager(ViewDataElo())
             view_data = elo.startElo()
-            ic(view_data)
             return True, view_data
             
         except ValueError as e:
-            ic(e)
             return False, str(e)
         except Exception as e:
             error_msg = (f'{type(e).__name__}: {e} '

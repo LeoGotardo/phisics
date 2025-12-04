@@ -15,7 +15,7 @@ class Controller:
         self.blueprint = Blueprint('view', __name__, template_folder='templates')
         
         self.app.register_blueprint(self.blueprint)
-        self.app.register_error_handler(Exception, self.handleException)
+        #self.app.register_error_handler(Exception, self.handleException)
         self.defineRouters()
         
         self.app.run(debug=Config.DEBUG, host=Config.HOST, port=Config.PORT)
@@ -227,28 +227,47 @@ class Controller:
                 page = request.args.get('page', '1')
                 perPage = request.args.get('perPage', '10')
                 
+                # CORREÇÃO: Processar ageRange corretamente
+                ageRangeProcessed = None
+                if ageRange != 'all' and ageRange:
+                    # Converter faixa etária em datas de nascimento
+                    from datetime import datetime, timedelta
+                    hoje = datetime.now()
+                    
+                    if ageRange == '10-18':
+                        # Nascidos entre (hoje - 18 anos) e (hoje - 10 anos)
+                        data_max = (hoje - timedelta(days=10*365)).strftime('%Y-%m-%d')
+                        data_min = (hoje - timedelta(days=18*365)).strftime('%Y-%m-%d')
+                        ageRangeProcessed = (data_min, data_max)
+                        
+                    elif ageRange == '19-29':
+                        data_max = (hoje - timedelta(days=19*365)).strftime('%Y-%m-%d')
+                        data_min = (hoje - timedelta(days=29*365)).strftime('%Y-%m-%d')
+                        ageRangeProcessed = (data_min, data_max)
+                        
+                    elif ageRange == '30+':
+                        data_max = (hoje - timedelta(days=30*365)).strftime('%Y-%m-%d')
+                        data_min = '1900-01-01'  # Data muito antiga
+                        ageRangeProcessed = (data_min, data_max)
                 
-                ic(cluster)
-                if ageRange == 'all':
-                    ageRange = None
+                # Processar cluster
                 if cluster == 'all':
                     cluster = None
-                if ageRange != None:
-                    ageRange = tuple(ageRange.split('-'))
                 
                 success, athletes = self.model.getAthletes(
                     sort=sort,
                     sortOrder=sortOrder,
                     query=query,
                     cluster=cluster,
-                    ageRange=ageRange,
+                    ageRange=ageRangeProcessed,
                     page=page,
                     per_page=perPage,
                     paginated=True
                 )
                 
                 if success == True:
-                    ic(athletes)
+                    # CORREÇÃO: Adicionar ageRange original aos filtros
+                    athletes['filters']['ageRange'] = ageRange
                     return render_template('analise.html', athletes=athletes)
                 else:
                     raise Exception(athletes)
@@ -317,7 +336,7 @@ class Controller:
                     athlete_data = athlete.dict()
                     # Converter data para formato do input
                     athlete_data['dataNascimento'] = athlete.dataNascimento.strftime('%Y-%m-%d')
-                    return render_template('editarAtleta.html', athlete=athlete_data)
+                    return render_template('editAthlete.html', athlete=athlete_data)
                 elif success == False:
                     flash(athlete, category='error')
                     return redirect(url_for('renderReview'))

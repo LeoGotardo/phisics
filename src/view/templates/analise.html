@@ -23,11 +23,11 @@
                 <option value="all" {% if athletes.filters.cluster == 'all' %}selected{% endif %}>Todos os Clusters</option>
                 <option value="elite" {% if athletes.filters.cluster == 'elite' %}selected{% endif %}>Elite</option>
                 <option value="competitivo" {% if athletes.filters.cluster == 'competitivo' %}selected{% endif %}>Competitivo</option>
-                <option value="intermediario" {% if athletes.filters.cluster == 'intermediario' %}selected{% endif %}>Intermediário</option>
+                <option value="intermediario" {% if athletes.filters.cluster in ['intermediario', 'intermediário'] %}selected{% endif %}>Intermediário</option>
                 <option value="iniciante" {% if athletes.filters.cluster == 'iniciante' %}selected{% endif %}>Iniciante</option>
             </select>
             
-            <!-- Filtro por idade -->
+            <!-- Filtro por idade - CORRIGIDO -->
             <select name="ageRange" id="ageRangeSelect">
                 <option value="all" {% if athletes.filters.ageRange == 'all' %}selected{% endif %}>Todas as Idades</option>
                 <option value="10-18" {% if athletes.filters.ageRange == '10-18' %}selected{% endif %}>10-18 anos</option>
@@ -99,7 +99,7 @@
             <div class="metric">{{ "%.1f"|format(athlete.saltoHorizontal) }}</div>
             <div class="metric">{{ athlete.abdominais }}</div>
             <div>
-                <span class="badge badge-{{ athlete.cluster.lower() }}">{{ athlete.cluster }}</span>
+                <span class="badge badge-{{ athlete.cluster_name.lower() }}">{{ athlete.cluster_name }}</span>
             </div>
             <div style="display: flex; gap: 8px; justify-content: center;">
                 <button 
@@ -154,16 +154,19 @@
     
     <div style="text-align: center; margin-top: 16px; color: #888; font-size: 0.9em;">
         Mostrando {{ athletes['items']|length }} de {{ athletes.pagination.total }} atletas
+        {% if athletes.filters.ageRange != 'all' %}
+        (Faixa: {{ athletes.filters.ageRange }})
+        {% endif %}
     </div>
     {% endif %}
 
-    <!-- Ações -->
+    <!-- Ações de Exportação - CORRIGIDAS -->
     <div class="actions">
-        <button class="btn btn-secondary" onclick="exportarPDF()">
-            <i class="fas fa-file-pdf"></i> Exportar PDF
+        <button class="btn btn-secondary" onclick="exportarDados()">
+            <i class="fas fa-file-csv"></i> Exportar CSV
         </button>
-        <button class="btn btn-secondary" onclick="exportarExcel()">
-            <i class="fas fa-file-excel"></i> Exportar Excel
+        <button class="btn btn-primary" onclick="exportarCompleto()">
+            <i class="fas fa-file-archive"></i> Exportar Completo (ZIP)
         </button>
     </div>
 </div>
@@ -227,10 +230,24 @@
     padding: 8px 12px;
     color: #666;
 }
+
+.badge {
+    display: inline-block;
+    padding: 4px 10px;
+    border-radius: 4px;
+    font-size: 0.8em;
+    font-weight: 600;
+    text-align: center;
+}
+
+.badge-elite { background: #4a9eff; color: #000; }
+.badge-competitivo { background: #7c3aed; color: #fff; }
+.badge-intermediário { background: #10b981; color: #000; }
+.badge-iniciante { background: #6b7280; color: #fff; }
 </style>
 
 <script>
-// Auto-submit quando os selects mudarem (mas mantém o valor da busca)
+// Auto-submit quando os selects mudarem
 document.addEventListener('DOMContentLoaded', function() {
     const form = document.getElementById('filterForm');
     const clusterSelect = document.getElementById('clusterSelect');
@@ -257,6 +274,23 @@ document.addEventListener('DOMContentLoaded', function() {
             form.submit();
         }
     });
+    
+    // Marcar nav como ativo
+    const navItem = document.querySelector('.review-nav');
+    const activeNavItem = document.querySelector('.nav-btn.active');
+    
+    if (navItem) {
+        navItem.classList.add('active');
+    }
+    
+    if (activeNavItem && !activeNavItem.classList.contains('review-nav')) {
+        activeNavItem.classList.remove('active');
+    }
+    
+    // Adicionar transição às linhas
+    document.querySelectorAll('.table-row[id^="row-"]').forEach(row => {
+        row.style.transition = 'all 0.3s ease';
+    });
 });
 
 function limparFiltros() {
@@ -264,7 +298,6 @@ function limparFiltros() {
 }
 
 async function editarAtleta(id) {
-    // Redirecionar para página de edição (a ser criada)
     window.location.href = `/atleta/editar/${id}`;
 }
 
@@ -305,33 +338,109 @@ async function excluirAtleta(id, nome) {
     }
 }
 
-function exportarPDF() {
-    const params = new URLSearchParams(window.location.search);
-    window.location.href = `/exportData?full_data=false&format=pdf&${params.toString()}`;
+// FUNÇÕES DE EXPORTAÇÃO CORRIGIDAS
+
+async function exportarDados() {
+    try {
+        const btn = event.target;
+        const originalHTML = btn.innerHTML;
+        btn.disabled = true;
+        btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Exportando...';
+        
+        // Exportar apenas CSV
+        const response = await fetch('/exportData?full_data=false', {
+            method: 'GET'
+        });
+        
+        if (!response.ok) {
+            throw new Error(`Erro HTTP: ${response.status}`);
+        }
+        
+        // Obter o arquivo como blob
+        const blob = await response.blob();
+        
+        // Criar URL temporária para download
+        const url = window.URL.createObjectURL(blob);
+        
+        // Criar elemento <a> temporário para iniciar download
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `talent_scout_dados_${new Date().toISOString().split('T')[0]}.csv`;
+        document.body.appendChild(a);
+        a.click();
+        
+        // Limpar
+        window.URL.revokeObjectURL(url);
+        document.body.removeChild(a);
+        
+        // Mostrar mensagem de sucesso
+        btn.innerHTML = '<i class="fas fa-check"></i> Exportado!';
+        setTimeout(() => {
+            btn.innerHTML = originalHTML;
+            btn.disabled = false;
+        }, 2000);
+        
+    } catch (error) {
+        console.error('Erro ao exportar dados:', error);
+        alert('Erro ao exportar dados: ' + error.message);
+        
+        // Restaurar botão
+        const btn = event.target;
+        btn.innerHTML = '<i class="fas fa-file-csv"></i> Exportar CSV';
+        btn.disabled = false;
+    }
 }
 
-function exportarExcel() {
-    const params = new URLSearchParams(window.location.search);
-    window.location.href = `/exportData?full_data=false&format=excel&${params.toString()}`;
+async function exportarCompleto() {
+    try {
+        const btn = event.target;
+        const originalHTML = btn.innerHTML;
+        btn.disabled = true;
+        btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Gerando ZIP...';
+        
+        // Exportar pacote completo (CSV + gráficos + PDF)
+        const response = await fetch('/exportData?full_data=true', {
+            method: 'GET'
+        });
+        
+        if (!response.ok) {
+            throw new Error(`Erro HTTP: ${response.status}`);
+        }
+        
+        // Obter o arquivo como blob
+        const blob = await response.blob();
+        
+        // Criar URL temporária para download
+        const url = window.URL.createObjectURL(blob);
+        
+        // Criar elemento <a> temporário para iniciar download
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `talent_scout_completo_${new Date().toISOString().split('T')[0]}.zip`;
+        document.body.appendChild(a);
+        a.click();
+        
+        // Limpar
+        window.URL.revokeObjectURL(url);
+        document.body.removeChild(a);
+        
+        // Mostrar mensagem de sucesso
+        btn.innerHTML = '<i class="fas fa-check"></i> Exportado!';
+        setTimeout(() => {
+            btn.innerHTML = originalHTML;
+            btn.disabled = false;
+        }, 2000);
+        
+    } catch (error) {
+        console.error('Erro ao exportar:', error);
+        alert('Erro ao exportar pacote completo: ' + error.message);
+        
+        // Restaurar botão
+        const btn = event.target;
+        btn.innerHTML = '<i class="fas fa-file-archive"></i> Exportar Completo (ZIP)';
+        btn.disabled = false;
+    }
 }
-
-document.addEventListener('DOMContentLoaded', function() {
-    const navItem = document.querySelector('.review-nav');
-    const activeNavItem = document.querySelector('.nav-btn.active');
-    
-    if (navItem) {
-        navItem.classList.add('active');
-    }
-    
-    if (activeNavItem) {
-        activeNavItem.classList.remove('active');
-    }
-    
-    // Adicionar transição às linhas
-    document.querySelectorAll('.table-row[id^="row-"]').forEach(row => {
-        row.style.transition = 'all 0.3s ease';
-    });
-});
 </script>
 
 {% endblock %}

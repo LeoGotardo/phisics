@@ -255,7 +255,7 @@ nav a.active {
 
 .table-row {
     display: grid;
-    grid-template-columns: 60px 2fr repeat(5, 1fr) 100px;
+    grid-template-columns: 60px 2fr repeat(6, 1fr) 100px;
     gap: 16px;
     padding: 20px 24px;
     border-top: 1px solid #1a1a1a;

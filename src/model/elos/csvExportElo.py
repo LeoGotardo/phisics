@@ -89,6 +89,45 @@ class CSVExportElo(Elo):
         return dataframe.to_csv(index=False).encode('utf-8')
     
     
+    def generatePDFReport(self, fullData: bool = True) -> bytes:
+        """
+        Gera relatório PDF completo.
+        """
+        from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer
+        from reportlab.lib.styles import getSampleStyleSheet
+        from reportlab.lib.pagesizes import A4
+        from io import BytesIO
+        
+        # Buscar atletas
+        athletes = self.getAthletes()
+        df = self.convertAthletesData(athletes)
+        
+        # Criar buffer
+        buffer = BytesIO()
+        
+        # Criar documento
+        doc = SimpleDocTemplate(buffer, pagesize=A4)
+        styles = getSampleStyleSheet()
+        
+        elements = []
+        elements.append(Paragraph("Relatório de Atletas - Talent Scout", styles['Title']))
+        elements.append(Spacer(1, 12))
+        elements.append(Paragraph(f"Total de atletas: {len(df)}", styles['Normal']))
+        elements.append(Spacer(1, 12))
+        
+        # Estatísticas por cluster
+        for cluster_id in sorted(df['cluster'].unique()):
+            cluster_name = self.knnModel.clusterMapping.get(cluster_id, f'Cluster {cluster_id}')
+            df_cluster = df[df['cluster'] == cluster_id]
+            
+            elements.append(Paragraph(f"<b>{cluster_name}</b>: {len(df_cluster)} atletas", styles['Heading2']))
+            elements.append(Spacer(1, 6))
+        
+        doc.build(elements)
+        
+        buffer.seek(0)
+        return buffer.read()
+    
     def getKNNMetrics(self, dataframe: pd.DataFrame) -> dict:
         """
         Retorna as métricas do KNN.
