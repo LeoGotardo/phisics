@@ -1,16 +1,16 @@
 import pandas as pd
 import numpy as np
-import sys
+from icecream import ic
 
-from sklearn.decomposition import PCA
-from sklearn.preprocessing import StandardScaler
 from sklearn.metrics import silhouette_score, davies_bouldin_score
+from sklearn.preprocessing import StandardScaler
+from sklearn.decomposition import PCA
 from sklearn.cluster import KMeans
 from scipy.stats import pearsonr
-from typing import List, Dict, Tuple, Literal
+from typing import List, Dict
 
-from src.utils.dataclasses import Elo
 from src.model.athleteModel import Athlete
+from src.utils.dataclasses import Elo
 from src.config import Config
 
 
@@ -63,7 +63,7 @@ class ViewDataElo(Elo):
             Lista de objetos Athlete
         """
         with Config.app.app_context():
-            athletes = Config.session.query(Athlete).all()
+            athletes = Config.session.query(Athlete).filter(Athlete.cluster != -1).all()
         
         if len(athletes) == 0:
             raise ValueError("Nenhum atleta cadastrado. Cadastre atletas para visualizar análises.")
@@ -203,6 +203,8 @@ class ViewDataElo(Elo):
             df_cluster = df[df['cluster_id'] == cluster_id]
             
             abdominais = df_cluster['abdominais']
+            
+            ic(abdominais)
             
             core_data.append({
                 'nivel': cluster_name,

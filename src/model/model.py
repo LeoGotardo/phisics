@@ -1,17 +1,14 @@
 import sys, pandas as pd
 
-
 from src.model.elos.dataAnalysisElo import DataAnalysisElo
 from src.model.elos.dbAnalyticsElo import DBAnalyticsElo
 from src.model.elos.csvImportElo import CSVImportElo
-from src.model.elos.csvExportElo import CSVExportElo
 from src.model.elos.viewDataElo import ViewDataElo
 from src.utils.dataGenerator import DataGenerator
 from src.model.elos.eloManager import EloManager
 from typing import Tuple, List, Dict, Literal
 from src.model.athleteModel import Athlete
 from src.model.knnModel import KNNModel
-from datetime import datetime
 from src.config import Config
 from sqlalchemy import func
 from icecream import ic
@@ -92,50 +89,6 @@ class Model:
             # Rollback em caso de erro
             self.session.rollback()
             
-            error_msg = (f'{type(e).__name__}: {e} '
-                        f'in line {sys.exc_info()[-1].tb_lineno} '
-                        f'in file {sys.exc_info()[-1].tb_frame.f_code.co_filename}')
-            return -1, error_msg
-    
-    
-    def exportData(self, fullData: bool = True, athletesIds: list[str] = None) -> Tuple[Literal[True, False, -1], bytes | str]:
-        """
-        Exporta dados dos atletas em formato ZIP (CSV + gráficos) ou apenas CSV.
-        
-        Args:
-            fullData: Se True, exporta ZIP completo. Se False, apenas CSV
-            athletesIds: Lista de IDs específicos para exportar (None = todos)
-            
-        Returns:
-            Tupla (status, dados_ou_mensagem)
-        """
-        try:
-            # Criar manager do elo de exportação
-            exportElo = CSVExportElo()
-            
-            # Buscar atletas
-            athletes = exportElo.getAthletes(athletesIds)
-            
-            if len(athletes) == 0:
-                return False, 'Não há atletas cadastrados para exportar'
-            
-            # Converter para DataFrame
-            df = exportElo.convertAthletesData(athletes)
-            
-            if not fullData:
-                # Exportar apenas CSV
-                csv_data = exportElo.generateCSV(df)
-                return True, csv_data
-            
-            # Exportar pacote completo (CSV + gráficos + README)
-            csv_data = exportElo.generateCSV(df)
-            graphs = exportElo.generateGraphs(df)
-            pdf_data = exportElo.generatePDFReport(True)
-            zip_data = exportElo.generateZip(csv_data, graphs, pdf_data, includeReadme=True)
-            
-            return True, zip_data
-            
-        except Exception as e:
             error_msg = (f'{type(e).__name__}: {e} '
                         f'in line {sys.exc_info()[-1].tb_lineno} '
                         f'in file {sys.exc_info()[-1].tb_frame.f_code.co_filename}')
@@ -238,6 +191,7 @@ class Model:
                 
                 # Classificar
                 status, resultado = self.knnModel.predict(athleteDict)
+                ic(resultado)
                 
                 if status:
                     # Atualizar cluster do atleta
@@ -612,11 +566,14 @@ class Model:
         try:
             elo = EloManager(ViewDataElo())
             view_data = elo.startElo()
+            ic(view_data)
             return True, view_data
             
         except ValueError as e:
+            ic(e)
             return False, str(e)
         except Exception as e:
+            ic(e)
             error_msg = (f'{type(e).__name__}: {e} '
                         f'in line {sys.exc_info()[-1].tb_lineno} '
                         f'in file {sys.exc_info()[-1].tb_frame.f_code.co_filename}')
@@ -637,6 +594,7 @@ class Model:
             athlete = Athlete(**athleteData)
 
             success, clusterResult = self.knnModel.predict(athleteData)
+            ic(clusterResult)
             if success != True:
                 return -1, clusterResult
             
@@ -764,205 +722,6 @@ class Model:
             error_msg = (f'{type(e).__name__}: {e} '
                         f'in line {sys.exc_info()[-1].tb_lineno} '
                         f'in file {sys.exc_info()[-1].tb_frame.f_code.co_filename}')
-            return -1, error_msg
-
-
-    def generatePDFReport(self, includeGraphs: bool = True) -> Tuple[Literal[True, False, -1], bytes | str]:
-        """
-        Gera relatório PDF completo com todas as análises.
-        
-        Args:
-            includeGraphs: Se deve incluir gráficos no PDF
-            
-        Returns:
-            Tupla (status, pdf_bytes_ou_mensagem)
-        """
-        try:
-            from reportlab.lib.pagesizes import A4, landscape
-            from reportlab.lib import colors
-            from reportlab.lib.units import cm
-            from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph, Spacer, PageBreak, Image
-            from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
-            from reportlab.lib.enums import TA_CENTER, TA_LEFT, TA_JUSTIFY
-            from io import BytesIO
-            
-            # Obter análise completa
-            status, data = self.getCompleteAnalysis()
-            
-            if status != True:
-                return status, data
-            
-            # Criar buffer para PDF
-            buffer = BytesIO()
-            
-            # Criar documento
-            doc = SimpleDocTemplate(
-                buffer,
-                pagesize=A4,
-                topMargin=2*cm,
-                bottomMargin=2*cm,
-                leftMargin=2*cm,
-                rightMargin=2*cm
-            )
-            
-            # Estilos
-            styles = getSampleStyleSheet()
-            
-            titleStyle = ParagraphStyle(
-                'CustomTitle',
-                parent=styles['Heading1'],
-                fontSize=24,
-                textColor=colors.HexColor('#1e293b'),
-                spaceAfter=30,
-                alignment=TA_CENTER
-            )
-            
-            headingStyle = ParagraphStyle(
-                'CustomHeading',
-                parent=styles['Heading2'],
-                fontSize=16,
-                textColor=colors.HexColor('#334155'),
-                spaceAfter=12,
-                spaceBefore=12
-            )
-            
-            bodyStyle = ParagraphStyle(
-                'CustomBody',
-                parent=styles['Normal'],
-                fontSize=10,
-                alignment=TA_JUSTIFY,
-                spaceAfter=8
-            )
-            
-            # Elementos do PDF
-            elements = []
-            
-            # Título
-            elements.append(Paragraph("RELATÓRIO DE ANÁLISE DE ATLETAS", titleStyle))
-            elements.append(Paragraph(f"Gerado em: {datetime.now().strftime('%d/%m/%Y %H:%M')}", bodyStyle))
-            elements.append(Spacer(1, 1*cm))
-            
-            # Resumo Executivo
-            elements.append(Paragraph("RESUMO EXECUTIVO", headingStyle))
-            
-            resumo = data['resumo_executivo']
-            
-            resumoData = [
-                ['Métrica', 'Valor'],
-                ['Total de Atletas', str(resumo['total_atletas'])],
-                ['Clusters Identificados', str(resumo['clusters'])],
-                ['Qualidade Clustering', f"{resumo['qualidade_clustering']:.2f}"],
-                ['Anomalias Detectadas', str(resumo['anomalias'])]
-            ]
-            
-            resumoTable = Table(resumoData, colWidths=[8*cm, 8*cm])
-            resumoTable.setStyle(TableStyle([
-                ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#1e293b')),
-                ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),
-                ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
-                ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
-                ('FONTSIZE', (0, 0), (-1, 0), 12),
-                ('BOTTOMPADDING', (0, 0), (-1, 0), 12),
-                ('BACKGROUND', (0, 1), (-1, -1), colors.beige),
-                ('GRID', (0, 0), (-1, -1), 1, colors.black)
-            ]))
-            
-            elements.append(resumoTable)
-            elements.append(Spacer(1, 0.5*cm))
-            
-            # Distribuição por Cluster
-            elements.append(Paragraph("DISTRIBUIÇÃO POR CLUSTER", headingStyle))
-            
-            distData = [['Cluster', 'Quantidade', 'Percentual']]
-            
-            for cluster, qtd in data['visualizacao']['estatisticas']['distribuicao'].items():
-                perc = (qtd / resumo['total_atletas']) * 100
-                distData.append([cluster, str(qtd), f"{perc:.1f}%"])
-            
-            distTable = Table(distData, colWidths=[6*cm, 5*cm, 5*cm])
-            distTable.setStyle(TableStyle([
-                ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#334155')),
-                ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),
-                ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
-                ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
-                ('GRID', (0, 0), (-1, -1), 1, colors.black),
-                ('ROWBACKGROUNDS', (0, 1), (-1, -1), [colors.white, colors.lightgrey])
-            ]))
-            
-            elements.append(distTable)
-            elements.append(PageBreak())
-            
-            # Insights Principais
-            elements.append(Paragraph("INSIGHTS PRINCIPAIS", headingStyle))
-            
-            for i, insight in enumerate(data['analise_estatistica']['insights'][:5], 1):
-                elements.append(Paragraph(f"<b>{i}. {insight['titulo']}</b>", bodyStyle))
-                elements.append(Paragraph(insight['descricao'], bodyStyle))
-                elements.append(Paragraph(f"<i>Ação recomendada: {insight['acao']}</i>", bodyStyle))
-                elements.append(Spacer(1, 0.3*cm))
-            
-            elements.append(PageBreak())
-            
-            # Top Performers
-            elements.append(Paragraph("TOP PERFORMERS", headingStyle))
-            
-            topData = [['Posição', 'Nome', 'Score', 'Cluster']]
-            
-            for i, performer in enumerate(resumo['top_performers'], 1):
-                topData.append([
-                    str(i),
-                    performer['nome'],
-                    f"{performer['score']:.2f}",
-                    performer['cluster']
-                ])
-            
-            topTable = Table(topData, colWidths=[2*cm, 6*cm, 4*cm, 4*cm])
-            topTable.setStyle(TableStyle([
-                ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#334155')),
-                ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),
-                ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
-                ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
-                ('GRID', (0, 0), (-1, -1), 1, colors.black),
-                ('ROWBACKGROUNDS', (0, 1), (-1, -1), [colors.white, colors.lightgrey])
-            ]))
-            
-            elements.append(topTable)
-            
-            # Construir PDF
-            doc.build(elements)
-            
-            # Retornar bytes
-            buffer.seek(0)
-            return True, buffer.read()
-            
-        except Exception as e:
-            error_msg = (f'{type(e).__name__}: {e} '
-                        f'in line {sys.exc_info()[-1].tb_lineno} '
-                        f'in file {sys.exc_info()[-1].tb_frame.f_code.co_filename}')
-            return -1, error_msg
-        
-        
-    def getAthleteById(self, athleteId: str) -> Tuple[Literal[True, False, -1], Athlete | str]:
-        """
-        Busca um atleta por ID.
-        
-        Args:
-            athleteId: ID do atleta
-            
-        Returns:
-            Tupla (status, athlete_ou_mensagem)
-        """
-        try:
-            with Config.app.app_context():
-                athlete = self.session.query(Athlete).filter_by(id=athleteId).first()
-                
-                if not athlete:
-                    return False, f'Atleta com ID {athleteId} não encontrado'
-                
-                return True, athlete
-                
-        except Exception as e:
-            error_msg = f'{type(e).__name__}: {e} in line {sys.exc_info()[-1].tb_lineno}'
             return -1, error_msg
 
 

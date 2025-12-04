@@ -15,7 +15,6 @@ class Controller:
         self.blueprint = Blueprint('view', __name__, template_folder='templates')
         
         self.app.register_blueprint(self.blueprint)
-        #self.app.register_error_handler(Exception, self.handleException)
         self.defineRouters()
         
         self.app.run(debug=Config.DEBUG, host=Config.HOST, port=Config.PORT)
@@ -27,7 +26,6 @@ class Controller:
         self.app.add_url_rule('/cadastro', view_func=self.createAthlete, methods=['GET', 'POST'])
         self.app.add_url_rule('/view', view_func=self.viewPage, methods=['GET'])
         self.app.add_url_rule('/loadCSVData', view_func=self.loadCSVData, methods=['POST'])
-        self.app.add_url_rule('/exportData', view_func=self.exportData, methods=['GET'])
         
         # CRUD de Atletas
         self.app.add_url_rule('/atleta/editar/<string:athlete_id>', view_func=self.editAthlete, methods=['GET', 'POST'])
@@ -139,49 +137,6 @@ class Controller:
                 return redirect(url_for('renderCadastro'))
         else:
             return render_template('404.html'), 404
-    
-    
-    def exportData(self):
-        """
-        Exporta dados dos atletas em formato ZIP com CSV e gráficos.
-        """
-        if request.method == 'GET':
-            try:
-                # Parâmetros opcionais da URL
-                full_data = request.args.get('full_data', 'true').lower() == 'true'
-                athletes_ids = request.args.get('ids', None)
-                
-                if athletes_ids:
-                    athletes_ids = athletes_ids.split(',')
-                
-                # Exportar dados através do model
-                status, result = self.model.exportData(
-                    fullData=full_data,
-                    athletesIds=athletes_ids
-                )
-                
-                if status == True:
-                    # result contém os bytes do arquivo ZIP
-                    return send_file(
-                        BytesIO(result),
-                        mimetype='application/zip',
-                        as_attachment=True,
-                        download_name='talent_scout_export.zip'
-                    )
-                    
-                elif status == False:
-                    flash(result, category='warning')
-                    return redirect(url_for('renderViewPage'))
-                    
-                else:  # status == -1
-                    raise Exception(result)
-                    
-            except Exception as e:
-                error_msg = f'{type(e).__name__}: {e}'
-                flash(f'Erro ao exportar dados: {error_msg}', category='error')
-                return redirect(url_for('renderViewPage'))
-        else:
-            return render_template('404.html'), 404
         
     
     def createAthlete(self):
@@ -284,7 +239,7 @@ class Controller:
         match request.method:
             case 'GET':
                 success, info = self.model.getViewInfo()
-                
+                ic(info)
                 if success == True:
                     return render_template('view.html', info=info)
                     
