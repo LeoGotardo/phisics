@@ -239,43 +239,84 @@ class Controller:
         match request.method:
             case 'GET':
                 success, info = self.model.getViewInfo()
-                ic(info)
+                
+                # Debug: imprimir estrutura dos dados
+                ic('Success:', success)
+                ic('Info type:', type(info))
+                ic('Info keys:', info.keys() if isinstance(info, dict) else 'Not a dict')
+                
                 if success == True:
+                    # Garantir que info é um dicionário válido
+                    if not isinstance(info, dict):
+                        flash('Erro: dados retornados em formato inválido', category='error')
+                        info = self._getEmptyViewData()
+                    
+                    # Validar que todas as chaves necessárias existem
+                    requiredKeys = ['pca_data', 'variance_explained', 'potencia_data', 
+                                'core_data', 'perfil_data', 'metricas', 'estatisticas']
+                    
+                    missingKeys = [key for key in requiredKeys if key not in info]
+                    
+                    if missingKeys:
+                        ic('Missing keys:', missingKeys)
+                        flash(f'Aviso: dados incompletos - {", ".join(missingKeys)}', category='warning')
+                        # Preencher chaves faltantes com dados vazios
+                        for key in missingKeys:
+                            info[key] = self._getEmptyData(key)
+                    
                     return render_template('view.html', info=info)
                     
                 elif success == False:
                     flash(info, category='warning')
-                    
-                    empty_data = {
-                        'pca_data': [],
-                        'variance_explained': {'pc1': 0, 'pc2': 0, 'total': 0},
-                        'potencia_data': {
-                            'x': [], 
-                            'y': [], 
-                            'correlacao': 0, 
-                            'p_value': '1.0'
-                        },
-                        'core_data': [],
-                        'perfil_data': [],
-                        'metricas': {
-                            'silhouette': 0, 
-                            'davies_bouldin': 0, 
-                            'inertia': 0
-                        },
-                        'estatisticas': {
-                            'total_atletas': 0, 
-                            'distribuicao': {}, 
-                            'features_analisadas': 0
-                        }
-                    }
-                    
-                    return render_template('view.html', info=empty_data)
+                    emptyData = self._getEmptyViewData()
+                    return render_template('view.html', info=emptyData)
                 
                 else:
                     raise Exception(info)
             
             case _:
                 return render_template('404.html'), 404
+
+
+    def _getEmptyViewData(self):
+        """Retorna estrutura vazia para quando não há dados"""
+        return {
+            'pca_data': [],
+            'variance_explained': {'pc1': 0, 'pc2': 0, 'total': 0},
+            'potencia_data': {
+                'x': [], 
+                'y': [], 
+                'correlacao': 0, 
+                'p_value': '1.0'
+            },
+            'core_data': [],
+            'perfil_data': [],
+            'metricas': {
+                'silhouette': 0, 
+                'davies_bouldin': 0, 
+                'inertia': 0
+            },
+            'estatisticas': {
+                'total_atletas': 0, 
+                'distribuicao': {}, 
+                'features_analisadas': 0
+            }
+        }
+
+
+    def _getEmptyData(self, key: str):
+        """Retorna dados vazios para uma chave específica"""
+        emptyDataMap = {
+            'pca_data': [],
+            'variance_explained': {'pc1': 0, 'pc2': 0, 'total': 0},
+            'potencia_data': {'x': [], 'y': [], 'correlacao': 0, 'p_value': '1.0'},
+            'core_data': [],
+            'perfil_data': [],
+            'metricas': {'silhouette': 0, 'davies_bouldin': 0, 'inertia': 0},
+            'estatisticas': {'total_atletas': 0, 'distribuicao': {}, 'features_analisadas': 0}
+        }
+        
+        return emptyDataMap.get(key, None)
 
 
     def editAthlete(self, athlete_id):

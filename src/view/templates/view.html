@@ -14,7 +14,7 @@
         <div style="margin-top: 16px; color: #666;">Processando análises estatísticas</div>
     </div>
 
-    <!-- Conteúdo Principal (hidden inicialmente) -->
+    <!-- Conteúdo Principal -->
     <div id="mainContent" style="display: none;">
         <div class="viz-grid">
             <!-- Gráfico 1: PCA Scatter -->
@@ -79,6 +79,9 @@
 </div>
 
 <script>
+// DEBUG: Variável global para inspecionar dados
+window.DEBUG_DADOS_VIEW = null;
+
 // Cores para os clusters
 const CORES_CLUSTERS = {
     'Elite': '#10b981',
@@ -87,56 +90,135 @@ const CORES_CLUSTERS = {
     'Iniciante': '#ef4444'
 };
 
-let charts = {}; // Armazenar instâncias dos gráficos
+let charts = {};
 
-// Carregar dados ao abrir a página
 document.addEventListener('DOMContentLoaded', function() {
+    console.log('=== INICIANDO CARREGAMENTO DE DADOS ===');
     carregarDados();
 });
 
 function carregarDados() {
     try {
-        const dados = {{ info | tojson }};
-
-        console.log('Dados recebidos:', dados);
+        console.log('1. Tentando parsear dados...');
+        
+        // CRÍTICO: Capturar dados do Jinja2
+        const dadosRaw = '{{ info | tojson | safe }}';
+        console.log('2. Dados raw recebidos:', dadosRaw);
+        
+        if (!dadosRaw || dadosRaw === 'None' || dadosRaw === '{}') {
+            throw new Error('Dados vazios ou nulos recebidos do servidor');
+        }
+        
+        const dados = JSON.parse(dadosRaw);
+        console.log('3. Dados parseados com sucesso:', dados);
+        
+        // Armazenar globalmente para debug
+        window.DEBUG_DADOS_VIEW = dados;
+        
+        // Validar estrutura dos dados
+        const chavesNecessarias = ['pca_data', 'variance_explained', 'potencia_data', 
+                                   'core_data', 'perfil_data', 'metricas', 'estatisticas'];
+        
+        const chavesFaltando = chavesNecessarias.filter(chave => !(chave in dados));
+        
+        if (chavesFaltando.length > 0) {
+            console.warn('⚠️ Chaves faltando:', chavesFaltando);
+            throw new Error(`Dados incompletos: faltam ${chavesFaltando.join(', ')}`);
+        }
+        
+        console.log('4. Estrutura validada. Verificando conteúdo...');
+        
+        // Verificar se há dados suficientes
+        if (!dados.pca_data || dados.pca_data.length === 0) {
+            throw new Error('Nenhum dado de PCA disponível');
+        }
+        
+        if (!dados.estatisticas || dados.estatisticas.total_atletas === 0) {
+            throw new Error('Nenhum atleta cadastrado para análise');
+        }
+        
+        console.log('5. Conteúdo validado. Criando gráficos...');
         
         // Ocultar loading e mostrar conteúdo
         document.getElementById('loadingState').style.display = 'none';
         document.getElementById('mainContent').style.display = 'block';
         
         // Criar gráficos
+        console.log('6. Criando gráfico PCA...');
         criarGraficoPCA(dados.pca_data, dados.variance_explained);
+        
+        console.log('7. Criando gráfico de correlação...');
         criarGraficoCorrelacao(dados.potencia_data);
+        
+        console.log('8. Criando gráfico de core...');
         criarGraficoCore(dados.core_data);
+        
+        console.log('9. Criando gráfico radar...');
         criarGraficoRadar(dados.perfil_data);
         
-        // Atualizar métricas
+        console.log('10. Atualizando métricas...');
         atualizarMetricas(dados.metricas);
         
-        // Atualizar insights
+        console.log('11. Atualizando insights...');
         atualizarInsights(dados.estatisticas);
         
+        console.log('✅ CARREGAMENTO COMPLETO!');
+        
     } catch (error) {
-        console.error('Erro:', error);
+        console.error('❌ ERRO NO CARREGAMENTO:', error);
+        console.error('Stack trace:', error.stack);
+        
         document.getElementById('loadingState').innerHTML = `
-            <div style="color: #ef4444;">
-                <div style="font-size: 1.2em;">Erro ao carregar dados</div>
-                <div style="margin-top: 8px;">${error.message}</div>
-                <button onclick="carregarDados()" style="margin-top: 16px; padding: 8px 16px; background: #007bff; color: white; border: none; border-radius: 4px; cursor: pointer;">
-                    Tentar Novamente
+            <div style="color: #ef4444; padding: 20px; background: #1a0000; border: 1px solid #ef4444; border-radius: 8px; max-width: 600px; margin: 0 auto;">
+                <div style="font-size: 1.3em; font-weight: 600; margin-bottom: 12px;">
+                    <i class="fas fa-exclamation-triangle"></i> Erro ao carregar dados
+                </div>
+                <div style="margin: 12px 0; padding: 12px; background: #000; border-radius: 4px; font-family: monospace; font-size: 0.9em;">
+                    ${error.message}
+                </div>
+                <div style="margin-top: 16px; font-size: 0.9em; color: #ff8888;">
+                    Possíveis causas:
+                    <ul style="text-align: left; margin: 8px 0; padding-left: 24px;">
+                        <li>Nenhum atleta cadastrado no sistema</li>
+                        <li>Dados de clustering não gerados</li>
+                        <li>Erro na comunicação com o servidor</li>
+                    </ul>
+                </div>
+                <button onclick="carregarDados()" style="margin-top: 16px; padding: 10px 20px; background: #ef4444; color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: 500;">
+                    <i class="fas fa-redo"></i> Tentar Novamente
                 </button>
+                <a href="{{ url_for('renderCadastro') }}" style="display: inline-block; margin-left: 12px; padding: 10px 20px; background: #4a9eff; color: white; text-decoration: none; border-radius: 6px; font-weight: 500;">
+                    <i class="fas fa-plus"></i> Cadastrar Atletas
+                </a>
+            </div>
+            <div style="margin-top: 24px; padding: 16px; background: #1a1a1a; border: 1px solid #333; border-radius: 8px; max-width: 600px; margin: 20px auto;">
+                <details>
+                    <summary style="cursor: pointer; color: #888; font-size: 0.9em;">
+                        <i class="fas fa-bug"></i> Informações de Debug
+                    </summary>
+                    <div style="margin-top: 12px; padding: 12px; background: #000; border-radius: 4px; font-family: monospace; font-size: 0.85em; color: #888; white-space: pre-wrap;">
+${error.stack || 'Stack trace não disponível'}
+
+Abra o console (F12) para mais detalhes.
+                    </div>
+                </details>
             </div>
         `;
     }
 }
 
-function criarGraficoPCA(pca_data, variance) {
+function criarGraficoPCA(pcaData, variance) {
+    if (!pcaData || pcaData.length === 0) {
+        console.warn('Dados PCA vazios');
+        return;
+    }
+    
     const ctx = document.getElementById('pcaChart').getContext('2d');
     
-    const datasets = pca_data.map(grupo => ({
+    const datasets = pcaData.map(grupo => ({
         label: grupo.nivel,
         data: grupo.x.map((x, i) => ({x: x, y: grupo.y[i]})),
-        backgroundColor: CORES_CLUSTERS[grupo.nivel] + '80', // 80 = opacidade
+        backgroundColor: CORES_CLUSTERS[grupo.nivel] + '80',
         borderColor: CORES_CLUSTERS[grupo.nivel],
         pointRadius: 5,
         pointHoverRadius: 7
@@ -179,10 +261,12 @@ function criarGraficoPCA(pca_data, variance) {
 }
 
 function criarGraficoCorrelacao(dados) {
-    if (!dados) return;
+    if (!dados || !dados.x || dados.x.length === 0) {
+        console.warn('Dados de correlação vazios');
+        return;
+    }
     
     const ctx = document.getElementById('correlacaoChart').getContext('2d');
-    
     const pontos = dados.x.map((x, i) => ({x: x, y: dados.y[i]}));
     
     charts.correlacao = new Chart(ctx, {
@@ -227,7 +311,10 @@ function criarGraficoCorrelacao(dados) {
 }
 
 function criarGraficoCore(dados) {
-    if (!dados) return;
+    if (!dados || dados.length === 0) {
+        console.warn('Dados de core vazios');
+        return;
+    }
     
     const ctx = document.getElementById('coreChart').getContext('2d');
     
@@ -273,7 +360,10 @@ function criarGraficoCore(dados) {
 }
 
 function criarGraficoRadar(dados) {
-    if (!dados) return;
+    if (!dados || dados.length === 0) {
+        console.warn('Dados de radar vazios');
+        return;
+    }
     
     const ctx = document.getElementById('radarChart').getContext('2d');
     
@@ -289,7 +379,7 @@ function criarGraficoRadar(dados) {
     charts.radar = new Chart(ctx, {
         type: 'radar',
         data: {
-            labels: dados[0].features.map(f => f.replace('_', ' ').toUpperCase()),
+            labels: dados[0].features.map(f => f.replace('saltoHorizontal', 'Salto').replace('_', ' ').toUpperCase()),
             datasets
         },
         options: {
@@ -325,19 +415,26 @@ function atualizarMetricas(metricas) {
 
 function atualizarInsights(stats) {
     const container = document.getElementById('insightsContainer');
+    
+    const distribuicaoHtml = Object.entries(stats.distribuicao)
+        .map(([nivel, qtd]) => `${nivel}: ${qtd} atletas`)
+        .join('<br>');
+    
     container.innerHTML = `
         <div>
             <strong style="color: #fff;">Distribuição de Atletas:</strong><br>
-            ${Object.entries(stats.distribuicao).map(([nivel, qtd]) => 
-                `${nivel}: ${qtd} atletas`
-            ).join('<br>')}
+            ${distribuicaoHtml || 'Nenhum dado disponível'}
         </div>
         <div>
             <strong style="color: #fff;">Total de Atletas:</strong><br>
             ${stats.total_atletas} atletas analisados
         </div>
         <div>
-            <strong style="color: #fff;">Recomendações gerais:</strong><br>
+            <strong style="color: #fff;">Features Analisadas:</strong><br>
+            ${stats.features_analisadas} características consideradas
+        </div>
+        <div>
+            <strong style="color: #fff;">Recomendações:</strong><br>
             Elite: manutenção + especialização<br>
             Competitivo: força máxima + técnica<br>
             Intermediário/Iniciante: base + volume
@@ -345,17 +442,18 @@ function atualizarInsights(stats) {
     `;
 }
 
+// Ativar nav corretamente
 document.addEventListener('DOMContentLoaded', function() {
-  const navItem = document.querySelector('.view-nav');
-  const activeNavItem = document.querySelector('.nav-btn.active');
-  
-  if (navItem) {
-    navItem.classList.add('active');
-  }
-  
-  if (activeNavItem) {
-    activeNavItem.classList.remove('active');
-  }
+    const navItem = document.querySelector('.view-nav');
+    const activeNavItem = document.querySelector('.nav-btn.active');
+    
+    if (navItem) {
+        navItem.classList.add('active');
+    }
+    
+    if (activeNavItem && !activeNavItem.classList.contains('view-nav')) {
+        activeNavItem.classList.remove('active');
+    }
 });
 </script>
 
@@ -378,39 +476,6 @@ document.addEventListener('DOMContentLoaded', function() {
     font-size: 1em;
     color: #fff;
     margin: 0 0 16px 0;
-}
-
-.btn {
-    padding: 12px 24px;
-    border: none;
-    border-radius: 6px;
-    font-size: 0.95em;
-    cursor: pointer;
-    transition: all 0.2s;
-}
-
-.btn-primary {
-    background: #007bff;
-    color: white;
-}
-
-.btn-primary:hover {
-    background: #0056b3;
-}
-
-.btn-secondary {
-    background: #6c757d;
-    color: white;
-}
-
-.btn-secondary:hover {
-    background: #545b62;
-}
-
-.actions {
-    display: flex;
-    gap: 12px;
-    justify-content: center;
 }
 </style>
 
