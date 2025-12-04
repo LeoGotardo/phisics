@@ -182,7 +182,7 @@ class KNNModel:
             # Se for apenas um atleta, retornar resultado simples
             if len(predictions) == 1:
                 clusterCode = predictions[0]
-                clusterName = self.clusterMapping[clusterCode]
+                clusterName = clusterCode
                 confidence = probabilities[0][clusterCode] * 100
                 
                 # Obter K vizinhos mais próximos

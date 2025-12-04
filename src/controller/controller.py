@@ -88,7 +88,6 @@ class Controller:
     def index(self):
         status, info = self.model.getDashboardInfo()
         if status == True:
-            ic(info)
             return render_template('dashboard.html', **info)
         if status == -1:
             raise Exception(info)
@@ -136,7 +135,6 @@ class Controller:
                 
             except Exception as e:
                 error_msg = f'{type(e).__name__}: {e}'
-                ic(error_msg)
                 flash(f'Erro ao importar CSV: {error_msg}', category='error')
                 return redirect(url_for('renderCadastro'))
         else:
@@ -180,7 +178,6 @@ class Controller:
                     
             except Exception as e:
                 error_msg = f'{type(e).__name__}: {e}'
-                ic(error_msg)
                 flash(f'Erro ao exportar dados: {error_msg}', category='error')
                 return redirect(url_for('renderViewPage'))
         else:
@@ -230,6 +227,15 @@ class Controller:
                 page = request.args.get('page', '1')
                 perPage = request.args.get('perPage', '10')
                 
+                
+                ic(cluster)
+                if ageRange == 'all':
+                    ageRange = None
+                if cluster == 'all':
+                    cluster = None
+                if ageRange != None:
+                    ageRange = tuple(ageRange.split('-'))
+                
                 success, athletes = self.model.getAthletes(
                     sort=sort,
                     sortOrder=sortOrder,
@@ -241,7 +247,8 @@ class Controller:
                     paginated=True
                 )
                 
-                if success:
+                if success == True:
+                    ic(athletes)
                     return render_template('analise.html', athletes=athletes)
                 else:
                     raise Exception(athletes)

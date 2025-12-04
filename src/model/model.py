@@ -518,14 +518,20 @@ class Model:
                 
             if query:
                 baseQuery = baseQuery.filter(Athlete.nome.like(f'%{query}%'))
-                
+            if id:
+                baseQuery = baseQuery.filter(Athlete.id == id)
+            if ageRange:
+                baseQuery = baseQuery.filter(Athlete.dataNascimento >= datetime.strptime(ageRange[0], '%Y-%m-%d'))
+                baseQuery = baseQuery.filter(Athlete.dataNascimento <= datetime.strptime(ageRange[1], '%Y-%m-%d'))
+            if cluster:
+                baseQuery = baseQuery.filter(Athlete.cluster == cluster)
             if sortOrder == 'desc':
                 baseQuery = baseQuery.order_by(sortColumn.desc())
             else:
                 baseQuery = baseQuery.order_by(sortColumn.asc())
                 
             if paginated:
-                paginatedResults = baseQuery.paginate(page=page, per_page=per_page, error_out=False)
+                paginatedResults = baseQuery.paginate(page=int(page), per_page=int(per_page), error_out=False)
                 
                 athlets = [athlete.dict() for athlete in paginatedResults.items]
                 
@@ -557,6 +563,8 @@ class Model:
                         'query': query,
                         'sort': sort,
                         'sortOrder': sortOrder,
+                        'cluster': cluster,
+                        'ageRange': ageRange
                     }
                 }
                 
@@ -583,10 +591,11 @@ class Model:
         try:
             elo = EloManager(ViewDataElo())
             view_data = elo.startElo()
-            
+            ic(view_data)
             return True, view_data
             
         except ValueError as e:
+            ic(e)
             return False, str(e)
         except Exception as e:
             error_msg = (f'{type(e).__name__}: {e} '

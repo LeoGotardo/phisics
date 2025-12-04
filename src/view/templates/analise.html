@@ -12,13 +12,14 @@
             <input 
                 type="text" 
                 name="query" 
+                id="queryInput"
                 placeholder="Buscar por nome..." 
                 value="{{ athletes.filters.query }}"
                 style="padding: 10px 16px; background: #111; border: 1px solid #222; border-radius: 6px; color: #e0e0e0; font-size: 0.9em; flex: 1; min-width: 200px;"
             >
             
             <!-- Filtro por cluster -->
-            <select name="cluster" onchange="this.form.submit()">
+            <select name="cluster" id="clusterSelect">
                 <option value="all" {% if athletes.filters.cluster == 'all' %}selected{% endif %}>Todos os Clusters</option>
                 <option value="elite" {% if athletes.filters.cluster == 'elite' %}selected{% endif %}>Elite</option>
                 <option value="competitivo" {% if athletes.filters.cluster == 'competitivo' %}selected{% endif %}>Competitivo</option>
@@ -27,7 +28,7 @@
             </select>
             
             <!-- Filtro por idade -->
-            <select name="ageRange" onchange="this.form.submit()">
+            <select name="ageRange" id="ageRangeSelect">
                 <option value="all" {% if athletes.filters.ageRange == 'all' %}selected{% endif %}>Todas as Idades</option>
                 <option value="10-18" {% if athletes.filters.ageRange == '10-18' %}selected{% endif %}>10-18 anos</option>
                 <option value="19-29" {% if athletes.filters.ageRange == '19-29' %}selected{% endif %}>19-29 anos</option>
@@ -35,7 +36,7 @@
             </select>
             
             <!-- Ordenação -->
-            <select name="sort" onchange="this.form.submit()">
+            <select name="sort" id="sortSelect">
                 <option value="nome" {% if athletes.filters.sort == 'nome' %}selected{% endif %}>Nome</option>
                 <option value="altura" {% if athletes.filters.sort == 'altura' %}selected{% endif %}>Altura</option>
                 <option value="arremesso" {% if athletes.filters.sort == 'arremesso' %}selected{% endif %}>Arremesso</option>
@@ -45,7 +46,7 @@
             </select>
             
             <!-- Ordem -->
-            <select name="sortOrder" onchange="this.form.submit()">
+            <select name="sortOrder" id="sortOrderSelect">
                 <option value="asc" {% if athletes.filters.sortOrder == 'asc' %}selected{% endif %}>Crescente</option>
                 <option value="desc" {% if athletes.filters.sortOrder == 'desc' %}selected{% endif %}>Decrescente</option>
             </select>
@@ -76,7 +77,7 @@
             <div>Ações</div>
         </div>
 
-        {% if athletes.items|length == 0 %}
+        {% if athletes['items']|length == 0 %}
         <div class="table-row" style="display: block; text-align: center; padding: 40px;">
             <div style="font-size: 1.1em; color: #888;">
                 <i class="fas fa-search"></i><br>
@@ -84,7 +85,7 @@
             </div>
         </div>
         {% else %}
-        {% for athlete in athletes.items %}
+        {% for athlete in athletes['items'] %}
         <div class="table-row" id="row-{{ athlete.id }}">
             <div class="rank">{{ loop.index + (athletes.pagination.currentPage - 1) * athletes.pagination.perPage }}</div>
             <div class="name">
@@ -152,7 +153,7 @@
     </div>
     
     <div style="text-align: center; margin-top: 16px; color: #888; font-size: 0.9em;">
-        Mostrando {{ athletes.items|length }} de {{ athletes.pagination.total }} atletas
+        Mostrando {{ athletes['items']|length }} de {{ athletes.pagination.total }} atletas
     </div>
     {% endif %}
 
@@ -229,6 +230,35 @@
 </style>
 
 <script>
+// Auto-submit quando os selects mudarem (mas mantém o valor da busca)
+document.addEventListener('DOMContentLoaded', function() {
+    const form = document.getElementById('filterForm');
+    const clusterSelect = document.getElementById('clusterSelect');
+    const ageRangeSelect = document.getElementById('ageRangeSelect');
+    const sortSelect = document.getElementById('sortSelect');
+    const sortOrderSelect = document.getElementById('sortOrderSelect');
+    
+    // Função para fazer submit preservando todos os valores
+    function autoSubmit() {
+        form.submit();
+    }
+    
+    // Adicionar evento de mudança aos selects
+    clusterSelect.addEventListener('change', autoSubmit);
+    ageRangeSelect.addEventListener('change', autoSubmit);
+    sortSelect.addEventListener('change', autoSubmit);
+    sortOrderSelect.addEventListener('change', autoSubmit);
+    
+    // Permitir busca com Enter no campo de texto
+    const queryInput = document.getElementById('queryInput');
+    queryInput.addEventListener('keypress', function(e) {
+        if (e.key === 'Enter') {
+            e.preventDefault();
+            form.submit();
+        }
+    });
+});
+
 function limparFiltros() {
     window.location.href = '{{ url_for("renderReview") }}';
 }
