@@ -2,24 +2,67 @@
 
 {% block content %}
 {{ super() }}
+
 <!-- ANÁLISE -->
 <div id="analise" class="screen">
+    <!-- Filtros -->
     <div class="filters">
-        <select>
-            <option value="all">Todos os Clusters</option>
-            <option value="elite">Elite</option>
-            <option value="competitive">Competitivo</option>
-            <option value="intermediate">Intermediario</option>
-            <option value="intermediate">Iniciante</option>
-        </select>
-        <select>
-            <option value="all">Todas as Idades</option>
-            <option value="'10-18'">10-18 anos</option>
-            <option value="'19-29'">19-29 anos</option>
-            <option value="'30+'">30+ anos</option>
-        </select>
+        <form id="filterForm" method="GET" action="{{ url_for('renderReview') }}" style="display: flex; gap: 12px; align-items: center; flex-wrap: wrap;">
+            <!-- Busca por nome -->
+            <input 
+                type="text" 
+                name="query" 
+                placeholder="Buscar por nome..." 
+                value="{{ athletes.filters.query }}"
+                style="padding: 10px 16px; background: #111; border: 1px solid #222; border-radius: 6px; color: #e0e0e0; font-size: 0.9em; flex: 1; min-width: 200px;"
+            >
+            
+            <!-- Filtro por cluster -->
+            <select name="cluster" onchange="this.form.submit()">
+                <option value="all" {% if athletes.filters.cluster == 'all' %}selected{% endif %}>Todos os Clusters</option>
+                <option value="elite" {% if athletes.filters.cluster == 'elite' %}selected{% endif %}>Elite</option>
+                <option value="competitivo" {% if athletes.filters.cluster == 'competitivo' %}selected{% endif %}>Competitivo</option>
+                <option value="intermediario" {% if athletes.filters.cluster == 'intermediario' %}selected{% endif %}>Intermediário</option>
+                <option value="iniciante" {% if athletes.filters.cluster == 'iniciante' %}selected{% endif %}>Iniciante</option>
+            </select>
+            
+            <!-- Filtro por idade -->
+            <select name="ageRange" onchange="this.form.submit()">
+                <option value="all" {% if athletes.filters.ageRange == 'all' %}selected{% endif %}>Todas as Idades</option>
+                <option value="10-18" {% if athletes.filters.ageRange == '10-18' %}selected{% endif %}>10-18 anos</option>
+                <option value="19-29" {% if athletes.filters.ageRange == '19-29' %}selected{% endif %}>19-29 anos</option>
+                <option value="30+" {% if athletes.filters.ageRange == '30+' %}selected{% endif %}>30+ anos</option>
+            </select>
+            
+            <!-- Ordenação -->
+            <select name="sort" onchange="this.form.submit()">
+                <option value="nome" {% if athletes.filters.sort == 'nome' %}selected{% endif %}>Nome</option>
+                <option value="altura" {% if athletes.filters.sort == 'altura' %}selected{% endif %}>Altura</option>
+                <option value="arremesso" {% if athletes.filters.sort == 'arremesso' %}selected{% endif %}>Arremesso</option>
+                <option value="saltoHorizontal" {% if athletes.filters.sort == 'saltoHorizontal' %}selected{% endif %}>Salto</option>
+                <option value="abdominais" {% if athletes.filters.sort == 'abdominais' %}selected{% endif %}>Abdominais</option>
+                <option value="cluster" {% if athletes.filters.sort == 'cluster' %}selected{% endif %}>Cluster</option>
+            </select>
+            
+            <!-- Ordem -->
+            <select name="sortOrder" onchange="this.form.submit()">
+                <option value="asc" {% if athletes.filters.sortOrder == 'asc' %}selected{% endif %}>Crescente</option>
+                <option value="desc" {% if athletes.filters.sortOrder == 'desc' %}selected{% endif %}>Decrescente</option>
+            </select>
+            
+            <!-- Botão de busca -->
+            <button type="submit" class="btn btn-primary" style="padding: 10px 20px;">
+                <i class="fas fa-search"></i> Buscar
+            </button>
+            
+            <!-- Limpar filtros -->
+            <button type="button" class="btn btn-secondary" onclick="limparFiltros()" style="padding: 10px 20px;">
+                <i class="fas fa-times"></i> Limpar
+            </button>
+        </form>
     </div>
 
+    <!-- Tabela -->
     <div class="table-container">
         <div class="table-header">
             <div>#</div>
@@ -29,91 +72,236 @@
             <div>Arremesso (cm)</div>
             <div>Salto (cm)</div>
             <div>Abdom (rep/min)</div>
-            <div>Score (pontos/100)</div>
             <div>Cluster</div>
+            <div>Ações</div>
         </div>
 
-        {% if athletes['items'] == [] %}
-        <div class="table-row">
-            <div class="name">
-                Nenhum Atleta
+        {% if athletes.items|length == 0 %}
+        <div class="table-row" style="display: block; text-align: center; padding: 40px;">
+            <div style="font-size: 1.1em; color: #888;">
+                <i class="fas fa-search"></i><br>
+                Nenhum atleta encontrado
             </div>
         </div>
         {% else %}
-        {% for athlete in athletes['items'] %}
-        <div class="table-row">
-            <div class="rank">1</div>
+        {% for athlete in athletes.items %}
+        <div class="table-row" id="row-{{ athlete.id }}">
+            <div class="rank">{{ loop.index + (athletes.pagination.currentPage - 1) * athletes.pagination.perPage }}</div>
             <div class="name">
                 {{ athlete.nome }}
                 <div class="sub">{{ athlete.idade }} anos, {{ athlete.sexo }}</div>
             </div>
             
-            <div class="metric">{{ athlete.altura }}</div>
-            <div class="metric">{{ athlete.envergadura }}</div>
-            <div class="metric">{{ athlete.arremesso }}</div>
-            <div class="metric">{{ athlete.saltoHorizontal }}</div>
+            <div class="metric">{{ "%.1f"|format(athlete.altura) }}</div>
+            <div class="metric">{{ "%.1f"|format(athlete.envergadura) }}</div>
+            <div class="metric">{{ "%.1f"|format(athlete.arremesso) }}</div>
+            <div class="metric">{{ "%.1f"|format(athlete.saltoHorizontal) }}</div>
             <div class="metric">{{ athlete.abdominais }}</div>
-            <div><span class="badge badge-{{ athlete.cluster.lower() }}">{{ athlete.cluster }}</span></div>
+            <div>
+                <span class="badge badge-{{ athlete.cluster.lower() }}">{{ athlete.cluster }}</span>
+            </div>
+            <div style="display: flex; gap: 8px; justify-content: center;">
+                <button 
+                    class="btn-icon" 
+                    onclick="editarAtleta('{{ athlete.id }}')"
+                    title="Editar"
+                >
+                    <i class="fas fa-edit"></i>
+                </button>
+                <button 
+                    class="btn-icon btn-danger" 
+                    onclick="excluirAtleta('{{ athlete.id }}', '{{ athlete.nome }}')"
+                    title="Excluir"
+                >
+                    <i class="fas fa-trash"></i>
+                </button>
+            </div>
         </div>
         {% endfor %}
         {% endif %}
     </div>
 
+    <!-- Paginação -->
+    {% if athletes.pagination.totalPages > 1 %}
+    <div class="pagination">
+        <!-- Primeira página -->
+        {% if athletes.pagination.showFirst %}
+        <a href="?page=1&sort={{ athletes.filters.sort }}&sortOrder={{ athletes.filters.sortOrder }}&query={{ athletes.filters.query }}&cluster={{ athletes.filters.cluster }}&ageRange={{ athletes.filters.ageRange }}" class="page-link">1</a>
+        {% if athletes.pagination.showLeftEllipsis %}
+        <span class="page-ellipsis">...</span>
+        {% endif %}
+        {% endif %}
+        
+        <!-- Páginas visíveis -->
+        {% for page_num in athletes.pagination.visiblePages %}
+        <a 
+            href="?page={{ page_num }}&sort={{ athletes.filters.sort }}&sortOrder={{ athletes.filters.sortOrder }}&query={{ athletes.filters.query }}&cluster={{ athletes.filters.cluster }}&ageRange={{ athletes.filters.ageRange }}" 
+            class="page-link {% if page_num == athletes.pagination.currentPage %}active{% endif %}"
+        >
+            {{ page_num }}
+        </a>
+        {% endfor %}
+        
+        <!-- Última página -->
+        {% if athletes.pagination.showLast %}
+        {% if athletes.pagination.showRightEllipsis %}
+        <span class="page-ellipsis">...</span>
+        {% endif %}
+        <a href="?page={{ athletes.pagination.totalPages }}&sort={{ athletes.filters.sort }}&sortOrder={{ athletes.filters.sortOrder }}&query={{ athletes.filters.query }}&cluster={{ athletes.filters.cluster }}&ageRange={{ athletes.filters.ageRange }}" class="page-link">{{ athletes.pagination.totalPages }}</a>
+        {% endif %}
+    </div>
+    
+    <div style="text-align: center; margin-top: 16px; color: #888; font-size: 0.9em;">
+        Mostrando {{ athletes.items|length }} de {{ athletes.pagination.total }} atletas
+    </div>
+    {% endif %}
+
+    <!-- Ações -->
     <div class="actions">
-        <button class="btn btn-secondary" onclick="exportPDF()">Exportar PDF</button>
-        <button class="btn btn-secondary" onclick="exportExcel()">Exportar Excel</button>
+        <button class="btn btn-secondary" onclick="exportarPDF()">
+            <i class="fas fa-file-pdf"></i> Exportar PDF
+        </button>
+        <button class="btn btn-secondary" onclick="exportarExcel()">
+            <i class="fas fa-file-excel"></i> Exportar Excel
+        </button>
     </div>
 </div>
-{% endblock %}
 
-{% block scripts %}
-{{ super() }}
-<script>
-function exportPDF() {
-    const data = {
-        athletes: {{ athletes | tojson | safe }},
-        filters: {
-            query: {{ request.args.get('query') | tojson | safe }},
-            sort: {{ request.args.get('sort') | tojson | safe }},
-            sortOrder: {{ request.args.get('sortOrder') | tojson | safe }}
-        }
-    };
-
-    const pdf = document.getElementById('pdf');
-    pdf.src = `/static/pdf/analise.pdf?${new URLSearchParams(data).toString()}`;
+<style>
+.btn-icon {
+    background: transparent;
+    border: 1px solid #444;
+    color: #888;
+    width: 32px;
+    height: 32px;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
 
-function exportExcel() {
-    const data = {
-        athletes: {{ athletes | tojson | safe }},
-        filters: {
-            query: {{ request.args.get('query') | tojson | safe }},
-            sort: {{ request.args.get('sort') | tojson | safe }},
-            sortOrder: {{ request.args.get('sortOrder') | tojson | safe }}
+.btn-icon:hover {
+    background: #222;
+    color: #fff;
+    border-color: #666;
+}
+
+.btn-icon.btn-danger:hover {
+    background: #dc2626;
+    border-color: #dc2626;
+    color: #fff;
+}
+
+.pagination {
+    display: flex;
+    justify-content: center;
+    gap: 8px;
+    margin-top: 24px;
+}
+
+.page-link {
+    padding: 8px 12px;
+    background: #111;
+    border: 1px solid #222;
+    border-radius: 6px;
+    color: #888;
+    text-decoration: none;
+    transition: all 0.2s;
+}
+
+.page-link:hover {
+    background: #222;
+    color: #fff;
+}
+
+.page-link.active {
+    background: #4a9eff;
+    border-color: #4a9eff;
+    color: #fff;
+}
+
+.page-ellipsis {
+    padding: 8px 12px;
+    color: #666;
+}
+</style>
+
+<script>
+function limparFiltros() {
+    window.location.href = '{{ url_for("renderReview") }}';
+}
+
+async function editarAtleta(id) {
+    // Redirecionar para página de edição (a ser criada)
+    window.location.href = `/atleta/editar/${id}`;
+}
+
+async function excluirAtleta(id, nome) {
+    if (!confirm(`Tem certeza que deseja excluir o atleta "${nome}"?`)) {
+        return;
+    }
+    
+    try {
+        const response = await fetch(`/atleta/excluir/${id}`, {
+            method: 'DELETE'
+        });
+        
+        if (response.ok) {
+            // Remover linha da tabela com animação
+            const row = document.getElementById(`row-${id}`);
+            row.style.opacity = '0';
+            row.style.transform = 'translateX(-20px)';
+            
+            setTimeout(() => {
+                row.remove();
+                
+                // Recarregar página se não houver mais atletas
+                const rows = document.querySelectorAll('.table-row[id^="row-"]');
+                if (rows.length === 0) {
+                    window.location.reload();
+                }
+            }, 300);
+            
+            alert(`Atleta "${nome}" excluído com sucesso!`);
+        } else {
+            const error = await response.text();
+            alert(`Erro ao excluir atleta: ${error}`);
         }
-    };
+    } catch (error) {
+        console.error('Erro:', error);
+        alert('Erro ao excluir atleta. Tente novamente.');
+    }
+}
 
-    const blob = new Blob([JSON.stringify(data)], { type: 'application/json' });
-    const url = URL.createObjectURL(blob);
+function exportarPDF() {
+    const params = new URLSearchParams(window.location.search);
+    window.location.href = `/exportData?full_data=false&format=pdf&${params.toString()}`;
+}
 
-    const link = document.createElement('a');
-    link.href = url;
-    link.download = 'analise.json';
-    link.click();
+function exportarExcel() {
+    const params = new URLSearchParams(window.location.search);
+    window.location.href = `/exportData?full_data=false&format=excel&${params.toString()}`;
 }
 
 document.addEventListener('DOMContentLoaded', function() {
-  const navItem = document.querySelector('.review-nav');
-  const activeNavItem = document.querySelector('.nav-btn.active');
-  
-  if (navItem) {
-    navItem.classList.add('active');
-  }
-  
-  if (activeNavItem) {
-    activeNavItem.classList.remove('active');
-  }
-});
+    const navItem = document.querySelector('.review-nav');
+    const activeNavItem = document.querySelector('.nav-btn.active');
     
+    if (navItem) {
+        navItem.classList.add('active');
+    }
+    
+    if (activeNavItem) {
+        activeNavItem.classList.remove('active');
+    }
+    
+    // Adicionar transição às linhas
+    document.querySelectorAll('.table-row[id^="row-"]').forEach(row => {
+        row.style.transition = 'all 0.3s ease';
+    });
+});
 </script>
+
 {% endblock %}

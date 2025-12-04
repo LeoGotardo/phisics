@@ -1,0 +1,186 @@
+{% extends "base.html" %}
+
+{% block content %}
+{{ super() }}
+
+<div id="editarAtleta" class="screen">
+    <div style="max-width: 1000px; margin: 0 auto;">
+        <!-- Cabeçalho -->
+        <div style="display: flex; align-items: center; margin-bottom: 32px;">
+            <a href="{{ url_for('renderReview') }}" class="btn btn-secondary" style="margin-right: 16px;">
+                <i class="fas fa-arrow-left"></i> Voltar
+            </a>
+            <h2 style="margin: 0; color: #fff;">Editar Atleta: {{ athlete.nome }}</h2>
+        </div>
+
+        <!-- Formulário de Edição -->
+        <form method="POST" action="{{ url_for('editAthlete', athlete_id=athlete.id) }}">
+            <div class="form-section">
+                <h3>Dados Pessoais</h3>
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label>Nome</label>
+                        <input type="text" name="nome" id="nome" value="{{ athlete.nome }}" required />
+                    </div>
+                    <div class="form-group">
+                        <label>Data de Nascimento</label>
+                        <input type="date" name="dataNascimento" id="dataNascimento" value="{{ athlete.dataNascimento }}" required />
+                    </div>
+                    <div class="form-group">
+                        <label>Sexo</label>
+                        <select name="sexo" id="sexo" required>
+                            <option value="M" {% if athlete.sexo == 'M' %}selected{% endif %}>Masculino</option>
+                            <option value="F" {% if athlete.sexo == 'F' %}selected{% endif %}>Feminino</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+
+            <div class="form-section">
+                <h3>Antropometria</h3>
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label>Altura (cm)</label>
+                        <input type="number" name="altura" id="altura" step="0.1" value="{{ athlete.altura }}" required />
+                    </div>
+                    <div class="form-group">
+                        <label>Envergadura (cm)</label>
+                        <input type="number" name="envergadura" id="envergadura" step="0.1" value="{{ athlete.envergadura }}" required />
+                    </div>
+                </div>
+            </div>
+
+            <div class="form-section">
+                <h3>Testes de Aptidão</h3>
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label>Arremesso (cm)</label>
+                        <input type="number" name="arremesso" id="arremesso" step="0.1" value="{{ athlete.arremesso }}" required />
+                    </div>
+                    <div class="form-group">
+                        <label>Salto Horizontal (cm)</label>
+                        <input type="number" name="saltoHorizontal" id="saltoHorizontal" step="0.1" value="{{ athlete.saltoHorizontal }}" required />
+                    </div>
+                    <div class="form-group">
+                        <label>Abdominais (rep/min)</label>
+                        <input type="number" name="abdominais" id="abdominais" value="{{ athlete.abdominais }}" required />
+                    </div>
+                </div>
+            </div>
+
+            <!-- Info sobre Cluster -->
+            <div style="background: #111; border: 1px solid #222; border-radius: 8px; padding: 20px; margin-bottom: 24px;">
+                <div style="display: flex; align-items: center; gap: 12px;">
+                    <i class="fas fa-info-circle" style="color: #4a9eff; font-size: 1.2em;"></i>
+                    <div>
+                        <strong style="color: #fff;">Cluster Atual:</strong>
+                        <span class="badge badge-{{ athlete.cluster.lower() }}" style="margin-left: 8px;">{{ athlete.cluster }}</span>
+                    </div>
+                </div>
+                <p style="margin: 12px 0 0 0; color: #888; font-size: 0.9em;">
+                    O cluster será recalculado automaticamente ao salvar as alterações nas métricas físicas.
+                </p>
+            </div>
+
+            <!-- Ações -->
+            <div class="actions" style="justify-content: flex-start;">
+                <button type="submit" class="btn btn-primary">
+                    <i class="fas fa-save"></i> Salvar Alterações
+                </button>
+                <button type="button" class="btn btn-secondary" onclick="confirmarCancelamento()">
+                    <i class="fas fa-times"></i> Cancelar
+                </button>
+                <button type="button" class="btn btn-secondary btn-danger" onclick="confirmarExclusao()" style="margin-left: auto;">
+                    <i class="fas fa-trash"></i> Excluir Atleta
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<style>
+.btn-danger {
+    background: #dc2626 !important;
+    border-color: #dc2626 !important;
+}
+
+.btn-danger:hover {
+    background: #b91c1c !important;
+}
+
+.form-section {
+    background: #0a0a0a;
+    border: 1px solid #222;
+    border-radius: 8px;
+    padding: 24px;
+    margin-bottom: 24px;
+}
+
+.badge {
+    display: inline-block;
+    padding: 6px 12px;
+    border-radius: 6px;
+    font-size: 0.85em;
+    font-weight: 600;
+}
+
+.badge-elite { background: #4a9eff; color: #000; }
+.badge-competitivo { background: #7c3aed; color: #fff; }
+.badge-intermediário { background: #10b981; color: #000; }
+.badge-iniciante { background: #6b7280; color: #fff; }
+</style>
+
+<script>
+function confirmarCancelamento() {
+    if (confirm('Descartar alterações e voltar?')) {
+        window.location.href = '{{ url_for("renderReview") }}';
+    }
+}
+
+async function confirmarExclusao() {
+    if (!confirm('Tem certeza que deseja EXCLUIR este atleta? Esta ação não pode ser desfeita!')) {
+        return;
+    }
+    
+    if (!confirm('CONFIRMAÇÃO FINAL: Excluir atleta "{{ athlete.nome }}"?')) {
+        return;
+    }
+    
+    try {
+        const response = await fetch('{{ url_for("deleteAthleteRoute", athlete_id=athlete.id) }}', {
+            method: 'DELETE'
+        });
+        
+        if (response.ok) {
+            alert('Atleta excluído com sucesso!');
+            window.location.href = '{{ url_for("renderReview") }}';
+        } else {
+            const error = await response.json();
+            alert(`Erro ao excluir: ${error.message}`);
+        }
+    } catch (error) {
+        console.error('Erro:', error);
+        alert('Erro ao excluir atleta. Tente novamente.');
+    }
+}
+
+// Validação do formulário
+document.querySelector('form').addEventListener('submit', function(e) {
+    const altura = parseFloat(document.getElementById('altura').value);
+    const envergadura = parseFloat(document.getElementById('envergadura').value);
+    
+    if (altura <= 0 || altura > 300) {
+        e.preventDefault();
+        alert('Altura deve estar entre 0 e 300 cm');
+        return;
+    }
+    
+    if (envergadura <= 0 || envergadura > 300) {
+        e.preventDefault();
+        alert('Envergadura deve estar entre 0 e 300 cm');
+        return;
+    }
+});
+</script>
+
+{% endblock %}

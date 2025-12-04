@@ -29,6 +29,11 @@ class Controller:
         self.app.add_url_rule('/loadCSVData', view_func=self.loadCSVData, methods=['POST'])
         self.app.add_url_rule('/exportData', view_func=self.exportData, methods=['GET'])
         
+        # CRUD de Atletas
+        self.app.add_url_rule('/atleta/editar/<string:athlete_id>', view_func=self.editAthlete, methods=['GET', 'POST'])
+        self.app.add_url_rule('/atleta/excluir/<string:athlete_id>', view_func=self.deleteAthleteRoute, methods=['DELETE'])
+        
+        # Aliases para melhor navegação
         self.app.add_url_rule('/dashboard', 'renderDashboard', self.index, methods=['GET'])
         self.app.add_url_rule('/cadastro', 'renderCadastro', self.createAthlete, methods=['GET'])
         self.app.add_url_rule('/analise', 'renderReview', self.review, methods=['GET'])
@@ -211,29 +216,38 @@ class Controller:
     
     
     def review(self):
+        """
+        Página de análise com filtros e ordenação.
+        """
         match request.method:
             case 'GET':
-                success, athletes = self.model.getAthletes(paginated=True)
-                if success:
-                    ic(athletes)
-                    return render_template('analise.html', athletes=athletes)
-                else:
-                    raise Exception(athletes)
-            case "POST":
-                sort = request.form.get('sort', 'name')
-                sortOrder = request.form.get('sortOrder', 'desc')
-                query = request.form.get('query', '')
-                paginated = request.form.get('paginated', 'false') == 'true'
-                page = request.form.get('page', '1')
-                perPage = request.form.get('perPage', '10')
+                # Pegar parâmetros da URL
+                sort = request.args.get('sort', 'nome')
+                sortOrder = request.args.get('sortOrder', 'asc')
+                query = request.args.get('query', '')
+                cluster = request.args.get('cluster', 'all')
+                ageRange = request.args.get('ageRange', 'all')
+                page = request.args.get('page', '1')
+                perPage = request.args.get('perPage', '10')
                 
-                success, athletes = self.model.getAthletes(sort, sortOrder, query, page, perPage, paginated=True)
-                if success == True:
+                success, athletes = self.model.getAthletes(
+                    sort=sort,
+                    sortOrder=sortOrder,
+                    query=query,
+                    cluster=cluster,
+                    ageRange=ageRange,
+                    page=page,
+                    per_page=perPage,
+                    paginated=True
+                )
+                
+                if success:
                     return render_template('analise.html', athletes=athletes)
                 else:
                     raise Exception(athletes)
+            
             case _:
-                return render_template('404.html')
+                return render_template('404.html'), 404
 
 
     def viewPage(self):
@@ -281,6 +295,71 @@ class Controller:
             
             case _:
                 return render_template('404.html'), 404
+
+
+    def editAthlete(self, athlete_id):
+        """
+        Página e ação de edição de atleta.
+        """
+        match request.method:
+            case 'GET':
+                # Buscar atleta
+                success, athlete = self.model.getAthleteById(athlete_id)
+                
+                if success == True:
+                    athlete_data = athlete.dict()
+                    # Converter data para formato do input
+                    athlete_data['dataNascimento'] = athlete.dataNascimento.strftime('%Y-%m-%d')
+                    return render_template('editarAtleta.html', athlete=athlete_data)
+                elif success == False:
+                    flash(athlete, category='error')
+                    return redirect(url_for('renderReview'))
+                else:
+                    raise Exception(athlete)
+            
+            case 'POST':
+                # Atualizar atleta
+                dataDict = {
+                    'nome': request.form.get('nome'),
+                    'dataNascimento': datetime.strptime(request.form.get('dataNascimento'), '%Y-%m-%d'),
+                    'sexo': request.form.get('sexo'),
+                    'altura': request.form.get('altura'),
+                    'envergadura': request.form.get('envergadura'),
+                    'arremesso': request.form.get('arremesso'),
+                    'saltoHorizontal': request.form.get('saltoHorizontal'),
+                    'abdominais': request.form.get('abdominais'),
+                }
+                
+                success, message = self.model.updateAthlete(athlete_id, dataDict)
+                
+                if success == True:
+                    flash(message, category='success')
+                elif success == False:
+                    flash(message, category='error')
+                else:
+                    raise Exception(message)
+                
+                return redirect(url_for('renderReview'))
+            
+            case _:
+                return render_template('404.html'), 404
+
+
+    def deleteAthleteRoute(self, athlete_id):
+        """
+        Rota para excluir atleta.
+        """
+        if request.method == 'DELETE':
+            success, message = self.model.deleteAthlete(athlete_id)
+            
+            if success == True:
+                return {'success': True, 'message': message}, 200
+            elif success == False:
+                return {'success': False, 'message': message}, 404
+            else:
+                return {'success': False, 'message': message}, 500
+        else:
+            return render_template('404.html'), 404
         
         
 if __name__ == '__main__':

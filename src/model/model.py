@@ -400,68 +400,105 @@ class Model:
     
     
     def getDashboardInfo(self):
+        """
+        Obtém informações agregadas para o dashboard.
+        Corrige queries para usar IDs numéricos dos clusters.
+        """
         try:
-            totalAthletes = self.session.query(Athlete).count()
-            elitAthletes = self.session.query(Athlete).filter(Athlete.cluster == 3).count()
-            competeAthletes = self.session.query(Athlete).filter(Athlete.cluster == 2).count()
-            intermedAthletes = self.session.query(Athlete).filter(Athlete.cluster == 1).count()
-            beginnerAthletes = self.session.query(Athlete).filter(Athlete.cluster == 0).count()
-            
-            totalInfo = {'totalAthletes': totalAthletes}
-            
-            eliteCluster = {'label': 'Elite',
-                            'count': elitAthletes,
-                            "heightMed": self.session.query(Athlete).filter(Athlete.cluster == 'Elite').with_entities(func.avg(Athlete.altura)).scalar(),
-                            "sizeMed": self.session.query(Athlete).filter(Athlete.cluster == 'Elite').with_entities(func.avg(Athlete.envergadura)).scalar(),
-                            "arremessoMed": self.session.query(Athlete).filter(Athlete.cluster == 'Elite').with_entities(func.avg(Athlete.arremesso)).scalar(),
-                            "saltoMed": self.session.query(Athlete).filter(Athlete.cluster == 'Elite').with_entities(func.avg(Athlete.saltoHorizontal)).scalar(),
-                            "abdominMed": self.session.query(Athlete).filter(Athlete.cluster == 'Elite').with_entities(func.avg(Athlete.abdominais)).scalar()
-                            }
-            
-            competitiveCluster = {'label': 'Competitivo',
-                                'count': competeAthletes,
-                                "heightMed": self.session.query(Athlete).filter(Athlete.cluster == 'Competitivo').with_entities(func.avg(Athlete.altura)).scalar(),
-                                "sizeMed": self.session.query(Athlete).filter(Athlete.cluster == 'Competitivo').with_entities(func.avg(Athlete.envergadura)).scalar(),
-                                "arremessoMed": self.session.query(Athlete).filter(Athlete.cluster == 'Competitivo').with_entities(func.avg(Athlete.arremesso)).scalar(),
-                                "saltoMed": self.session.query(Athlete).filter(Athlete.cluster == 'Competitivo').with_entities(func.avg(Athlete.saltoHorizontal)).scalar(),
-                                "abdominMed": self.session.query(Athlete).filter(Athlete.cluster == 'Competitivo').with_entities(func.avg(Athlete.abdominais)).scalar()
-                                }
-            
-            intemedianCluster = {'label': 'Intermediário',
-                                'count': intermedAthletes,
-                                "heightMed": self.session.query(Athlete).filter(Athlete.cluster == 'Intermediario').with_entities(func.avg(Athlete.altura)).scalar(),
-                                "sizeMed": self.session.query(Athlete).filter(Athlete.cluster == 'Intermediario').with_entities(func.avg(Athlete.envergadura)).scalar(),
-                                "arremessoMed": self.session.query(Athlete).filter(Athlete.cluster == 'Intermediario').with_entities(func.avg(Athlete.arremesso)).scalar(),
-                                "saltoMed": self.session.query(Athlete).filter(Athlete.cluster == 'Intermediario').with_entities(func.avg(Athlete.saltoHorizontal)).scalar(),
-                                "abdominMed": self.session.query(Athlete).filter(Athlete.cluster == 'Intermediario').with_entities(func.avg(Athlete.abdominais)).scalar()
-                                }
-            
-            beginnerCluster = {'label': 'Iniciante',
-                                'count': beginnerAthletes,
-                                "heightMed": self.session.query(Athlete).filter(Athlete.cluster == 'Iniciante').with_entities(func.avg(Athlete.altura)).scalar(),
-                                "sizeMed": self.session.query(Athlete).filter(Athlete.cluster == 'Iniciante').with_entities(func.avg(Athlete.envergadura)).scalar(),
-                                "arremessoMed": self.session.query(Athlete).filter(Athlete.cluster == 'Iniciante').with_entities(func.avg(Athlete.arremesso)).scalar(),
-                                "saltoMed": self.session.query(Athlete).filter(Athlete.cluster == 'Iniciante').with_entities(func.avg(Athlete.saltoHorizontal)).scalar(),
-                                "abdominMed": self.session.query(Athlete).filter(Athlete.cluster == 'Iniciante').with_entities(func.avg(Athlete.abdominais)).scalar()
-                                }
+            with Config.app.app_context():
+                # Total de atletas
+                totalAthletes = self.session.query(Athlete).count()
+                
+                # Contagem por cluster (usando IDs: 0=Iniciante, 1=Intermediário, 2=Competitivo, 3=Elite)
+                elitAthletes = self.session.query(Athlete).filter(Athlete.cluster == 3).count()
+                competeAthletes = self.session.query(Athlete).filter(Athlete.cluster == 2).count()
+                intermedAthletes = self.session.query(Athlete).filter(Athlete.cluster == 1).count()
+                beginnerAthletes = self.session.query(Athlete).filter(Athlete.cluster == 0).count()
+                
+                totalInfo = {'totalAthletes': totalAthletes}
+                
+                # Elite (cluster 3)
+                eliteCluster = {
+                    'label': 'Elite',
+                    'count': elitAthletes,
+                    "heightMed": round(self.session.query(func.avg(Athlete.altura))
+                        .filter(Athlete.cluster == 3).scalar() or 0, 2),
+                    "sizeMed": round(self.session.query(func.avg(Athlete.envergadura))
+                        .filter(Athlete.cluster == 3).scalar() or 0, 2),
+                    "arremessoMed": round(self.session.query(func.avg(Athlete.arremesso))
+                        .filter(Athlete.cluster == 3).scalar() or 0, 2),
+                    "saltoMed": round(self.session.query(func.avg(Athlete.saltoHorizontal))
+                        .filter(Athlete.cluster == 3).scalar() or 0, 2),
+                    "abdominMed": round(self.session.query(func.avg(Athlete.abdominais))
+                        .filter(Athlete.cluster == 3).scalar() or 0, 2)
+                }
+                
+                # Competitivo (cluster 2)
+                competitiveCluster = {
+                    'label': 'Competitivo',
+                    'count': competeAthletes,
+                    "heightMed": round(self.session.query(func.avg(Athlete.altura))
+                        .filter(Athlete.cluster == 2).scalar() or 0, 2),
+                    "sizeMed": round(self.session.query(func.avg(Athlete.envergadura))
+                        .filter(Athlete.cluster == 2).scalar() or 0, 2),
+                    "arremessoMed": round(self.session.query(func.avg(Athlete.arremesso))
+                        .filter(Athlete.cluster == 2).scalar() or 0, 2),
+                    "saltoMed": round(self.session.query(func.avg(Athlete.saltoHorizontal))
+                        .filter(Athlete.cluster == 2).scalar() or 0, 2),
+                    "abdominMed": round(self.session.query(func.avg(Athlete.abdominais))
+                        .filter(Athlete.cluster == 2).scalar() or 0, 2)
+                }
+                
+                # Intermediário (cluster 1)
+                intermediateCluster = {
+                    'label': 'Intermediário',
+                    'count': intermedAthletes,
+                    "heightMed": round(self.session.query(func.avg(Athlete.altura))
+                        .filter(Athlete.cluster == 1).scalar() or 0, 2),
+                    "sizeMed": round(self.session.query(func.avg(Athlete.envergadura))
+                        .filter(Athlete.cluster == 1).scalar() or 0, 2),
+                    "arremessoMed": round(self.session.query(func.avg(Athlete.arremesso))
+                        .filter(Athlete.cluster == 1).scalar() or 0, 2),
+                    "saltoMed": round(self.session.query(func.avg(Athlete.saltoHorizontal))
+                        .filter(Athlete.cluster == 1).scalar() or 0, 2),
+                    "abdominMed": round(self.session.query(func.avg(Athlete.abdominais))
+                        .filter(Athlete.cluster == 1).scalar() or 0, 2)
+                }
+                
+                # Iniciante (cluster 0)
+                beginnerCluster = {
+                    'label': 'Iniciante',
+                    'count': beginnerAthletes,
+                    "heightMed": round(self.session.query(func.avg(Athlete.altura))
+                        .filter(Athlete.cluster == 0).scalar() or 0, 2),
+                    "sizeMed": round(self.session.query(func.avg(Athlete.envergadura))
+                        .filter(Athlete.cluster == 0).scalar() or 0, 2),
+                    "arremessoMed": round(self.session.query(func.avg(Athlete.arremesso))
+                        .filter(Athlete.cluster == 0).scalar() or 0, 2),
+                    "saltoMed": round(self.session.query(func.avg(Athlete.saltoHorizontal))
+                        .filter(Athlete.cluster == 0).scalar() or 0, 2),
+                    "abdominMed": round(self.session.query(func.avg(Athlete.abdominais))
+                        .filter(Athlete.cluster == 0).scalar() or 0, 2)
+                }
 
-            info = {
-                'totalInfo': totalInfo,
-                'clusterInfo': {
-                    'eliteCluster': eliteCluster,
-                    'competitiveCluster': competitiveCluster,
-                    'intermediateCluster': intemedianCluster,
-                    'beginerCluster': beginnerCluster
-            }
-            }
-            
-            return True, info
+                info = {
+                    'totalInfo': totalInfo,
+                    'clusterInfo': {
+                        'eliteCluster': eliteCluster,
+                        'competitiveCluster': competitiveCluster,
+                        'intermediateCluster': intermediateCluster,
+                        'beginerCluster': beginnerCluster
+                    }
+                }
+                
+                return True, info
                 
         except Exception as e:
-            return -1, str(f'{type(e).__name__}: {e} in line {sys.exc_info()[-1].tb_lineno} in file {sys.exc_info()[-1].tb_frame.f_code.co_filename}')
+            error_msg = f'{type(e).__name__}: {e} in line {sys.exc_info()[-1].tb_lineno}'
+            return -1, error_msg
     
     
-    def getAthletes(self, sort: str = 'id', sortOrder: str = 'desc', query: str = None, paginated: bool = False, page: int = 1, per_page: int = 10) -> tuple[bool, list[Athlete]] | tuple[bool, dict]:
+    def getAthletes(self, id: str = None, ageRange: tuple[int|int] = None, cluster: str = None, sort: str = 'id', sortOrder: str = 'desc', query: str = None, paginated: bool = False, page: int = 1, per_page: int = 10) -> tuple[bool, list[Athlete]] | tuple[bool, dict]:
         try:
             sortOptions = {
                 'name': Athlete.nome,
@@ -874,4 +911,110 @@ class Model:
             error_msg = (f'{type(e).__name__}: {e} '
                         f'in line {sys.exc_info()[-1].tb_lineno} '
                         f'in file {sys.exc_info()[-1].tb_frame.f_code.co_filename}')
+            return -1, error_msg
+        
+        
+    def getAthleteById(self, athleteId: str) -> Tuple[Literal[True, False, -1], Athlete | str]:
+        """
+        Busca um atleta por ID.
+        
+        Args:
+            athleteId: ID do atleta
+            
+        Returns:
+            Tupla (status, athlete_ou_mensagem)
+        """
+        try:
+            with Config.app.app_context():
+                athlete = self.session.query(Athlete).filter_by(id=athleteId).first()
+                
+                if not athlete:
+                    return False, f'Atleta com ID {athleteId} não encontrado'
+                
+                return True, athlete
+                
+        except Exception as e:
+            error_msg = f'{type(e).__name__}: {e} in line {sys.exc_info()[-1].tb_lineno}'
+            return -1, error_msg
+
+
+    def updateAthlete(self, athleteId: str, athleteData: dict) -> Tuple[Literal[True, False, -1], str]:
+        """
+        Atualiza os dados de um atleta existente.
+        
+        Args:
+            athleteId: ID do atleta
+            athleteData: Dicionário com novos dados
+            
+        Returns:
+            Tupla (status, mensagem)
+        """
+        try:
+            with Config.app.app_context():
+                athlete = self.session.query(Athlete).filter_by(id=athleteId).first()
+                
+                if not athlete:
+                    return False, f'Atleta com ID {athleteId} não encontrado'
+                
+                # Atualizar campos
+                if 'nome' in athleteData:
+                    athlete.nome = athleteData['nome']
+                if 'dataNascimento' in athleteData:
+                    athlete.dataNascimento = athleteData['dataNascimento']
+                if 'sexo' in athleteData:
+                    athlete.sexo = athleteData['sexo']
+                if 'altura' in athleteData:
+                    athlete.altura = float(athleteData['altura'])
+                if 'envergadura' in athleteData:
+                    athlete.envergadura = float(athleteData['envergadura'])
+                if 'arremesso' in athleteData:
+                    athlete.arremesso = float(athleteData['arremesso'])
+                if 'saltoHorizontal' in athleteData:
+                    athlete.saltoHorizontal = float(athleteData['saltoHorizontal'])
+                if 'abdominais' in athleteData:
+                    athlete.abdominais = int(athleteData['abdominais'])
+                
+                # Reclassificar com KNN se alguma métrica mudou
+                if any(k in athleteData for k in ['altura', 'envergadura', 'arremesso', 'saltoHorizontal', 'abdominais', 'sexo']):
+                    if self.knnModel.isTrained:
+                        success, result = self.knnModel.predict(athlete.dict())
+                        if success and isinstance(result, dict):
+                            athlete.cluster = result['cluster']
+                
+                self.session.commit()
+                
+                return True, f'Atleta {athlete.nome} atualizado com sucesso!'
+                
+        except Exception as e:
+            self.session.rollback()
+            error_msg = f'{type(e).__name__}: {e} in line {sys.exc_info()[-1].tb_lineno}'
+            return -1, error_msg
+
+
+    def deleteAthlete(self, athleteId: str) -> Tuple[Literal[True, False, -1], str]:
+        """
+        Exclui um atleta do banco de dados.
+        
+        Args:
+            athleteId: ID do atleta
+            
+        Returns:
+            Tupla (status, mensagem)
+        """
+        try:
+            with Config.app.app_context():
+                athlete = self.session.query(Athlete).filter_by(id=athleteId).first()
+                
+                if not athlete:
+                    return False, f'Atleta com ID {athleteId} não encontrado'
+                
+                nome = athlete.nome
+                self.session.delete(athlete)
+                self.session.commit()
+                
+                return True, f'Atleta {nome} excluído com sucesso!'
+                
+        except Exception as e:
+            self.session.rollback()
+            error_msg = f'{type(e).__name__}: {e} in line {sys.exc_info()[-1].tb_lineno}'
             return -1, error_msg
