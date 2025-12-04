@@ -26,7 +26,7 @@ class ViewDataElo(Elo):
         self.features = ['sexo_encoded', 'altura', 'envergadura', 
                         'arremesso', 'saltoHorizontal', 'abdominais']
         
-        self.cluster_names = {
+        self.clusterNames = {
             0: 'Iniciante', 
             1: 'Intermediário', 
             2: 'Competitivo', 
@@ -42,7 +42,7 @@ class ViewDataElo(Elo):
         self.chain = [
             self.getAthletes,
             self.prepareDataFrame,
-            self.generatePCAData,
+            self.generatePcaData,
             self.generateCorrelacaoData,
             self.generateCoreData,
             self.generateRadarData,
@@ -84,8 +84,8 @@ class ViewDataElo(Elo):
         Returns:
             Dicionário com DataFrame e dados originais
         """
-        athletes_data = [athlete.dict() for athlete in athletes]
-        df = pd.DataFrame(athletes_data)
+        athletesData = [athlete.dict() for athlete in athletes]
+        df = pd.DataFrame(athletesData)
         
         if 'sexo' in df.columns:
             df['sexo_encoded'] = df['sexo'].map({'M': 1, 'F': 0})
@@ -97,10 +97,10 @@ class ViewDataElo(Elo):
         df = df.dropna(subset=self.features)
         
         if df['cluster'].dtype == 'object':
-            reverse_mapping = {v: k for k, v in self.cluster_names.items()}
-            df['cluster_id'] = df['cluster'].map(reverse_mapping)
+            reverseMapping = {v: k for k, v in self.clusterNames.items()}
+            df['clusterId'] = df['cluster'].map(reverseMapping)
         else:
-            df['cluster_id'] = df['cluster']
+            df['clusterId'] = df['cluster']
         
         return {
             'df': df,
@@ -109,7 +109,7 @@ class ViewDataElo(Elo):
         }
     
     
-    def generatePCAData(self, data: Dict) -> Dict:
+    def generatePcaData(self, data: Dict) -> Dict:
         """
         Gera dados para o gráfico PCA (scatter plot).
         
@@ -123,34 +123,34 @@ class ViewDataElo(Elo):
         
         X = df[self.features].values
         scaler = StandardScaler()
-        X_scaled = scaler.fit_transform(X)
+        xScaled = scaler.fit_transform(X)
         
         pca = PCA(n_components=2)
-        X_pca = pca.fit_transform(X_scaled)
+        xPca = pca.fit_transform(xScaled)
         
-        df['PC1'] = X_pca[:, 0]
-        df['PC2'] = X_pca[:, 1]
+        df['PC1'] = xPca[:, 0]
+        df['PC2'] = xPca[:, 1]
         
-        pca_data = []
+        pcaData = []
         
-        for cluster_id in sorted(df['cluster_id'].unique()):
-            cluster_name = self.cluster_names.get(int(cluster_id), f'Cluster {cluster_id}')
-            df_cluster = df[df['cluster_id'] == cluster_id]
+        for clusterId in sorted(df['clusterId'].unique()):
+            clusterName = self.clusterNames.get(int(clusterId), f'Cluster {clusterId}')
+            dfCluster = df[df['clusterId'] == clusterId]
             
-            pca_data.append({
-                'nivel': cluster_name,
-                'x': df_cluster['PC1'].round(2).tolist(),
-                'y': df_cluster['PC2'].round(2).tolist()
+            pcaData.append({
+                'nivel': clusterName,
+                'x': dfCluster['PC1'].round(2).tolist(),
+                'y': dfCluster['PC2'].round(2).tolist()
             })
         
-        variance_explained = {
+        varianceExplained = {
             'pc1': round(pca.explained_variance_ratio_[0] * 100, 1),
             'pc2': round(pca.explained_variance_ratio_[1] * 100, 1),
             'total': round(sum(pca.explained_variance_ratio_) * 100, 1)
         }
         
-        data['results']['pca_data'] = pca_data
-        data['results']['variance_explained'] = variance_explained
+        data['results']['pca_data'] = pcaData
+        data['results']['variance_explained'] = varianceExplained
         data['df'] = df
         
         return data
@@ -168,19 +168,19 @@ class ViewDataElo(Elo):
         """
         df = data['df']
         
-        potencia_superior = df['arremesso'].values
-        potencia_inferior = df['saltoHorizontal'].values
+        potenciaSuperior = df['arremesso'].values
+        potenciaInferior = df['saltoHorizontal'].values
         
-        r_value, p_value = pearsonr(potencia_superior, potencia_inferior)
+        rValue, pValue = pearsonr(potenciaSuperior, potenciaInferior)
         
-        correlacao_data = {
-            'x': [round(x, 2) for x in potencia_superior.tolist()],
-            'y': [round(y, 2) for y in potencia_inferior.tolist()],
-            'correlacao': round(r_value, 2),
-            'p_value': '0.001' if p_value < 0.001 else f'{p_value:.3f}'
+        correlacaoData = {
+            'x': [round(x, 2) for x in potenciaSuperior.tolist()],
+            'y': [round(y, 2) for y in potenciaInferior.tolist()],
+            'correlacao': round(rValue, 2),
+            'p_value': '0.001' if pValue < 0.001 else f'{pValue:.3f}'
         }
         
-        data['results']['potencia_data'] = correlacao_data
+        data['results']['potencia_data'] = correlacaoData
         
         return data
     
@@ -196,25 +196,27 @@ class ViewDataElo(Elo):
             Dicionário atualizado com dados de core
         """
         df = data['df']
-        core_data = []
+        coreData = []
         
-        for cluster_id in sorted(df['cluster_id'].unique()):
-            cluster_name = self.cluster_names.get(int(cluster_id), f'Cluster {cluster_id}')
-            df_cluster = df[df['cluster_id'] == cluster_id]
+        for clusterId in sorted(df['clusterId'].unique()):
+            clusterName = self.clusterNames.get(int(clusterId), f'Cluster {clusterId}')
+            dfCluster = df[df['clusterId'] == clusterId]
             
-            abdominais = df_cluster['abdominais']
+            # CORREÇÃO: Remover NaN antes de calcular estatísticas
+            abdominais = dfCluster['abdominais'].dropna()
             
-            ic(abdominais)
+            if len(abdominais) == 0:
+                continue
             
-            core_data.append({
-                'nivel': cluster_name,
+            coreData.append({
+                'nivel': clusterName,
                 'media': round(abdominais.mean(), 1),
                 'std': round(abdominais.std(), 1),
                 'min': int(abdominais.min()),
                 'max': int(abdominais.max())
             })
         
-        data['results']['core_data'] = core_data
+        data['results']['core_data'] = coreData
         
         return data
     
@@ -230,35 +232,35 @@ class ViewDataElo(Elo):
             Dicionário atualizado com dados radar
         """
         df = data['df']
-        radar_features = ['arremesso', 'saltoHorizontal', 'abdominais', 'altura', 'envergadura']
+        radarFeatures = ['arremesso', 'saltoHorizontal', 'abdominais', 'altura', 'envergadura']
         
-        df_normalized = df.copy()
-        for feat in radar_features:
-            min_val = df[feat].min()
-            max_val = df[feat].max()
-            if max_val > min_val:
-                df_normalized[f'{feat}_norm'] = ((df[feat] - min_val) / (max_val - min_val)) * 100
+        dfNormalized = df.copy()
+        for feat in radarFeatures:
+            minVal = df[feat].min()
+            maxVal = df[feat].max()
+            if maxVal > minVal:
+                dfNormalized[f'{feat}_norm'] = ((df[feat] - minVal) / (maxVal - minVal)) * 100
             else:
-                df_normalized[f'{feat}_norm'] = 50
+                dfNormalized[f'{feat}_norm'] = 50
         
-        radar_data = []
+        radarData = []
         
-        for cluster_id in sorted(df_normalized['cluster_id'].unique()):
-            cluster_name = self.cluster_names.get(int(cluster_id), f'Cluster {cluster_id}')
-            df_cluster = df_normalized[df_normalized['cluster_id'] == cluster_id]
+        for clusterId in sorted(dfNormalized['clusterId'].unique()):
+            clusterName = self.clusterNames.get(int(clusterId), f'Cluster {clusterId}')
+            dfCluster = dfNormalized[dfNormalized['clusterId'] == clusterId]
             
             valores = [
-                round(df_cluster[f'{feat}_norm'].mean(), 1) 
-                for feat in radar_features
+                round(dfCluster[f'{feat}_norm'].mean(), 1) 
+                for feat in radarFeatures
             ]
             
-            radar_data.append({
-                'nivel': cluster_name,
-                'features': radar_features,
+            radarData.append({
+                'nivel': clusterName,
+                'features': radarFeatures,
                 'valores': valores
             })
         
-        data['results']['perfil_data'] = radar_data
+        data['results']['perfil_data'] = radarData
         
         return data
     
@@ -277,21 +279,21 @@ class ViewDataElo(Elo):
         
         X = df[self.features].values
         scaler = StandardScaler()
-        X_scaled = scaler.fit_transform(X)
+        xScaled = scaler.fit_transform(X)
         
-        labels = df['cluster_id'].values
+        labels = df['clusterId'].values
         
-        silhouette = silhouette_score(X_scaled, labels)
-        davies_bouldin = davies_bouldin_score(X_scaled, labels)
+        silhouette = silhouette_score(xScaled, labels)
+        daviesBouldin = davies_bouldin_score(xScaled, labels)
         
-        n_clusters = len(np.unique(labels))
-        kmeans = KMeans(n_clusters=n_clusters, random_state=42, n_init=10)
-        kmeans.fit(X_scaled)
+        nClusters = len(np.unique(labels))
+        kmeans = KMeans(n_clusters=nClusters, random_state=42, n_init=10)
+        kmeans.fit(xScaled)
         inertia = kmeans.inertia_
         
         metricas = {
             'silhouette': round(silhouette, 2),
-            'davies_bouldin': round(davies_bouldin, 2),
+            'davies_bouldin': round(daviesBouldin, 2),
             'inertia': round(inertia, 0)
         }
         
@@ -313,10 +315,10 @@ class ViewDataElo(Elo):
         df = data['df']
         
         distribuicao = {}
-        for cluster_id in sorted(df['cluster_id'].unique()):
-            cluster_name = self.cluster_names.get(int(cluster_id), f'Cluster {cluster_id}')
-            count = len(df[df['cluster_id'] == cluster_id])
-            distribuicao[cluster_name] = count
+        for clusterId in sorted(df['clusterId'].unique()):
+            clusterName = self.clusterNames.get(int(clusterId), f'Cluster {clusterId}')
+            count = len(df[df['clusterId'] == clusterId])
+            distribuicao[clusterName] = count
         
         estatisticas = {
             'total_atletas': len(df),

@@ -240,27 +240,18 @@ class Controller:
             case 'GET':
                 success, info = self.model.getViewInfo()
                 
-                # Debug: imprimir estrutura dos dados
-                ic('Success:', success)
-                ic('Info type:', type(info))
-                ic('Info keys:', info.keys() if isinstance(info, dict) else 'Not a dict')
-                
                 if success == True:
-                    # Garantir que info é um dicionário válido
                     if not isinstance(info, dict):
                         flash('Erro: dados retornados em formato inválido', category='error')
                         info = self._getEmptyViewData()
                     
-                    # Validar que todas as chaves necessárias existem
                     requiredKeys = ['pca_data', 'variance_explained', 'potencia_data', 
                                 'core_data', 'perfil_data', 'metricas', 'estatisticas']
                     
                     missingKeys = [key for key in requiredKeys if key not in info]
                     
                     if missingKeys:
-                        ic('Missing keys:', missingKeys)
                         flash(f'Aviso: dados incompletos - {", ".join(missingKeys)}', category='warning')
-                        # Preencher chaves faltantes com dados vazios
                         for key in missingKeys:
                             info[key] = self._getEmptyData(key)
                     
@@ -325,12 +316,10 @@ class Controller:
         """
         match request.method:
             case 'GET':
-                # Buscar atleta
                 success, athlete = self.model.getAthleteById(athlete_id)
                 
                 if success == True:
                     athlete_data = athlete.dict()
-                    # Converter data para formato do input
                     athlete_data['dataNascimento'] = athlete.dataNascimento.strftime('%Y-%m-%d')
                     return render_template('editAthlete.html', athlete=athlete_data)
                 elif success == False:
@@ -340,7 +329,6 @@ class Controller:
                     raise Exception(athlete)
             
             case 'POST':
-                # Atualizar atleta
                 dataDict = {
                     'nome': request.form.get('nome'),
                     'dataNascimento': datetime.strptime(request.form.get('dataNascimento'), '%Y-%m-%d'),

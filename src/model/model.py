@@ -19,6 +19,7 @@ class Model:
         self.db = Config.db
         self.session = Config.session
         self.knnModel = KNNModel(nNeighbors=5)
+        self.create_tables()
         
         # Tentar carregar modelo salvo
         status, msg = self.knnModel.loadModel('models/knn_model.pkl')
@@ -32,7 +33,6 @@ class Model:
                 print(f"⚠ Não foi possível treinar o modelo: {msg}")
 
         
-        self.create_tables()
         
             
     def create_tables(self) -> None:
@@ -191,7 +191,6 @@ class Model:
                 
                 # Classificar
                 status, resultado = self.knnModel.predict(athleteDict)
-                ic(resultado)
                 
                 if status:
                     # Atualizar cluster do atleta
@@ -566,14 +565,11 @@ class Model:
         try:
             elo = EloManager(ViewDataElo())
             view_data = elo.startElo()
-            ic(view_data)
             return True, view_data
             
         except ValueError as e:
-            ic(e)
             return False, str(e)
         except Exception as e:
-            ic(e)
             error_msg = (f'{type(e).__name__}: {e} '
                         f'in line {sys.exc_info()[-1].tb_lineno} '
                         f'in file {sys.exc_info()[-1].tb_frame.f_code.co_filename}')
@@ -594,20 +590,42 @@ class Model:
             athlete = Athlete(**athleteData)
 
             success, clusterResult = self.knnModel.predict(athleteData)
-            ic(clusterResult)
+            
             if success != True:
                 return -1, clusterResult
             
-            # clusterResult é um dicionário, extrair apenas o nome do cluster
+            # CORREÇÃO: Extrair o valor numérico do cluster
             if isinstance(clusterResult, dict):
-                athlete.cluster = clusterResult['cluster']
+                clusterName = clusterResult['cluster']
+                # Mapear nome do cluster para ID numérico
+                clusterMapping = {
+                    'Iniciante': 0,
+                    'Intermediário': 1,
+                    'Competitivo': 2,
+                    'Elite': 3
+                }
+                athlete.cluster = clusterMapping.get(clusterName, 0)
+            elif isinstance(clusterResult, (int, float)):
+                athlete.cluster = int(clusterResult)
+            elif isinstance(clusterResult, str):
+                # Se for string, tentar mapear
+                clusterMapping = {
+                    'Iniciante': 0,
+                    'Intermediário': 1,
+                    'Competitivo': 2,
+                    'Elite': 3
+                }
+                athlete.cluster = clusterMapping.get(clusterResult, 0)
             else:
-                athlete.cluster = clusterResult
+                # Fallback
+                athlete.cluster = 0
             
             self.session.add(athlete)
             self.session.commit()
             
-            return True, f'Atleta {athlete.nome} cadastrado com sucesso no cluster {athlete.cluster}!'
+            clusterNameDisplay = athlete.getClusterName()
+            
+            return True, f'Atleta {athlete.nome} cadastrado com sucesso no cluster {clusterNameDisplay}!'
             
         except Exception as e:
             self.session.rollback()

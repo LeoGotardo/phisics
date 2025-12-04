@@ -162,7 +162,7 @@ class KNNModel:
             
         Returns:
             Tupla (sucesso, resultado)
-            resultado pode ser string (nome do cluster) ou dict com detalhes
+            resultado pode ser int (ID do cluster) ou dict com detalhes
         """
         if not self.isTrained:
             return False, "Modelo não foi treinado ainda"
@@ -173,23 +173,24 @@ class KNNModel:
                 athleteData = pd.DataFrame([athleteData])
             
             X = self.prepareFeatures(athleteData)
-            XScaled = self.scaler.transform(X)
+            xScaled = self.scaler.transform(X)
             
             # Fazer predição
-            predictions = self.knn.predict(XScaled)
-            probabilities = self.knn.predict_proba(XScaled)
+            predictions = self.knn.predict(xScaled)
+            probabilities = self.knn.predict_proba(xScaled)
             
             # Se for apenas um atleta, retornar resultado simples
             if len(predictions) == 1:
-                clusterCode = predictions[0]
-                clusterName = clusterCode
+                clusterCode = int(predictions[0])  # CORREÇÃO: Garantir que é int
+                clusterName = self.clusterMapping.get(clusterCode, 'Não classificado')
                 confidence = probabilities[0][clusterCode] * 100
                 
                 # Obter K vizinhos mais próximos
-                distances, indices = self.knn.kneighbors(XScaled, n_neighbors=self.nNeighbors)
+                distances, indices = self.knn.kneighbors(xScaled, n_neighbors=self.nNeighbors)
                 
                 resultado = {
-                    'cluster': clusterName,
+                    'cluster': clusterCode,  # CORREÇÃO: Retornar ID numérico direto
+                    'cluster_name': clusterName,  # Nome para exibição
                     'confianca': f"{confidence:.1f}%",
                     'probabilidades': {
                         self.clusterMapping[i]: f"{prob*100:.1f}%"
@@ -203,12 +204,14 @@ class KNNModel:
             # Se forem múltiplos atletas, retornar lista
             resultados = []
             for i, (pred, probs) in enumerate(zip(predictions, probabilities)):
-                clusterName = self.clusterMapping[pred]
-                confidence = probs[pred] * 100
+                clusterCode = int(pred)  # CORREÇÃO: Garantir int
+                clusterName = self.clusterMapping[clusterCode]
+                confidence = probs[clusterCode] * 100
                 
                 resultados.append({
                     'indice': i,
-                    'cluster': clusterName,
+                    'cluster': clusterCode,  # CORREÇÃO: ID numérico
+                    'cluster_name': clusterName,
                     'confianca': f"{confidence:.1f}%"
                 })
             
