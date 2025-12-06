@@ -137,7 +137,7 @@ class CSVImportElo(Elo):
             try:
                 athlete = Athlete(
                     nome=row['nome'],
-                    data_nascimento=row['data_nascimento'],
+                    dataNascimento=row['dataNascimento'],
                     sexo=row['sexo'],
                     altura=row['altura'],
                     envergadura=row['envergadura'],
