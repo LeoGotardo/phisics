@@ -16,7 +16,7 @@ class CSVImportElo(Elo):
     def __init__(self) -> None:        
         super().__init__()
         
-        self.COLUMNS: list[Column] = Config.COLUMNS
+        self.COLUMNS: list[Column] = Config.COLUMNS.copy()
         
         self._build_chain()
     

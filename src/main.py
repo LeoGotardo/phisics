@@ -62,13 +62,33 @@ Exemplos de uso:
         help='Gera N atletas sintéticos e salva em CSV (não adiciona ao DB)'
     )
     
-    parser.add_argument(
-        '--no-server',
-        action='store_true',
-        help='Não inicia o servidor web após executar comandos'
-    )
-    
     return parser.parse_args()
+
+
+def clearDatabase():
+    """
+    Limpa o banco de dados.
+    """
+    print("\n" + "="*70)
+    print("🗑  LIMPANDO BANCO DE DADOS")
+    print("="*70)
+    
+    from src.model.model import Model
+    
+    model = Model()
+    
+    status, message = model.clearDatabase()
+    
+    if status:
+        print("\n✅ SUCESSO!")
+        print(message)
+        print("\n" + "="*70)
+        return True
+    else:
+        print("\n❌ ERRO!")
+        print(message)
+        print("\n" + "="*70)
+        return False
 
 
 def populateDatabase(nAthletes: int, clearExisting: bool = False):
@@ -123,7 +143,7 @@ def exportDatabaseToCsv(filepath: str):
     print(f"\n📂 Arquivo de destino: {filepath}")
     print(f"⏳ Exportando dados...")
     
-    status, result = model.exportData(fullData=False)
+    status, result = model.exportData()
     
     if status == True:
         with open(filepath, 'wb') as f:
@@ -272,6 +292,11 @@ def main():
             shouldStartServer = False
             print("\n✓ Finalizando sem iniciar servidor (--no-server)")
     
+    elif args.clear:
+        success = clearDatabase()
+        if not success:
+            sys.exit(1)
+    
     elif args.export:
         success = exportDatabaseToCsv(args.export)
         if not success:
@@ -288,13 +313,7 @@ def main():
             shouldStartServer = False
             print("\n✓ Finalizando sem iniciar servidor (--no-server)")
     
-    elif args.generate_data:
-        generateDataOnly(args.generate_data)
-        
-        if args.no_server:
-            shouldStartServer = False
-            print("\n✓ Finalizando sem iniciar servidor (--no-server)")
-    
+
     # Iniciar servidor se necessário
     if shouldStartServer:
         print("\n" + "="*70)

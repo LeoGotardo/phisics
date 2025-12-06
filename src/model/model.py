@@ -95,6 +95,61 @@ class Model:
             return -1, error_msg
  
  
+    def clearDatabase(self) -> Tuple[bool, str]:
+        """
+        Limpa o banco de dados.
+        
+        Returns:
+            Tupla (sucesso, mensagem)
+        """
+        try:
+            with Config.app.app_context():
+                self.session.query(Athlete).delete()
+                self.session.commit()
+                
+                return True, 'Banco de dados limpo com sucesso!'
+                
+        except Exception as e:
+            self.session.rollback()
+            error_msg = (f'{type(e).__name__}: {e} '
+                        f'in line {sys.exc_info()[-1].tb_lineno} '
+                        f'in file {sys.exc_info()[-1].tb_frame.f_code.co_filename}')
+            return -1, error_msg
+ 
+ 
+    def exportData(self) -> Tuple[bool, bytes | str]:
+        """
+        Exporta dados do banco para CSV.
+            
+        Returns:
+            Tupla (sucesso, bytes_do_arquivo_ou_mensagem_de_erro)
+        """
+        try:
+            with Config.app.app_context():
+                athletes = self.session.query(Athlete).all()
+                
+                if not athletes or len(athletes) == 0:
+                    return False, 'Nenhum atleta encontrado no banco de dados'
+                
+                # Converter para DataFrame
+                athletesData = [athlete.dict() for athlete in athletes]
+                dfAthletes = pd.DataFrame(athletesData)
+                
+                essentialColumns = ['id', 'nome', 'dataNascimento', 'sexo', 'altura', 'envergadura', 'arremesso', 'saltoHorizontal', 'abdominais', 'cluster']
+                dfAthletes = dfAthletes[essentialColumns]
+                
+                # Converter DataFrame para CSV em bytes
+                csvBytes = dfAthletes.to_csv(index=False).encode('utf-8')
+                
+                return True, csvBytes
+                
+        except Exception as e:
+            error_msg = (f'{type(e).__name__}: {e} '
+                        f'in line {sys.exc_info()[-1].tb_lineno} '
+                        f'in file {sys.exc_info()[-1].tb_frame.f_code.co_filename}')
+            return -1, error_msg
+    
+ 
     def trainKNNModel(self, forceRetrain: bool = False) -> Tuple[bool, str]:
         """
         Treina o modelo KNN com todos os atletas do banco.
@@ -128,6 +183,25 @@ class Model:
                 return True, msg
             else:
                 return False, msg
+                
+        except Exception as e:
+            return -1, f'{type(e).__name__}: {e} in line {sys.exc_info()[-1].tb_lineno}'
+        
+        
+    def getAthleteById(self, athleteId: str) -> Tuple[bool, Athlete | None]:
+        """
+        Busca um atleta pelo seu ID.
+        
+        Args:
+            athleteId: ID do atleta
+            
+        Returns:
+            Tupla (status, atleta_ou_None)
+        """
+        try:
+            with Config.app.app_context():
+                athlete = self.session.query(Athlete).filter_by(id=athleteId).first()
+                return True, athlete
                 
         except Exception as e:
             return -1, f'{type(e).__name__}: {e} in line {sys.exc_info()[-1].tb_lineno}'

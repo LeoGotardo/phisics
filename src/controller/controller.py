@@ -133,6 +133,7 @@ class Controller:
                 
             except Exception as e:
                 error_msg = f'{type(e).__name__}: {e}'
+                ic(e)
                 flash(f'Erro ao importar CSV: {error_msg}', category='error')
                 return redirect(url_for('renderCadastro'))
         else:
