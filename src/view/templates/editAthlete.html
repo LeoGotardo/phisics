@@ -29,8 +29,8 @@
                     <div class="form-group">
                         <label>Sexo</label>
                         <select name="sexo" id="sexo" required>
-                            <option value="M" {% if athlete.sexo == 'M' %}selected{% endif %}>Masculino</option>
-                            <option value="F" {% if athlete.sexo == 'F' %}selected{% endif %}>Feminino</option>
+                            <option value="M" {% if athlete.sexo_display == 'Masculino' %}selected{% endif %}>Masculino</option>
+                            <option value="F" {% if athlete.sexo_display == 'Feminino' %}selected{% endif %}>Feminino</option>
                         </select>
                     </div>
                 </div>

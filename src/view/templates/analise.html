@@ -90,7 +90,7 @@
             <div class="rank">{{ loop.index + (athletes.pagination.currentPage - 1) * athletes.pagination.perPage }}</div>
             <div class="name">
                 {{ athlete.nome }}
-                <div class="sub">{{ athlete.idade }} anos, {{ athlete.sexo }}</div>
+                <div class="sub">{{ athlete.idade }} anos, {{ athlete.sexo_display }}</div>
             </div>
             
             <div class="metric">{{ "%.1f"|format(athlete.altura) }}</div>

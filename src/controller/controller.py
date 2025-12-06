@@ -321,7 +321,6 @@ class Controller:
                 if success == True:
                     athlete_data = athlete.dict()
                     athlete_data['dataNascimento'] = athlete.dataNascimento.strftime('%Y-%m-%d')
-                    athlete_data['sexo'] = str(athlete_data['sexo']).replace('0', 'Masculino').replace('1', 'Feminino')
                     return render_template('editAthlete.html', athlete=athlete_data)
                 elif success == False:
                     flash(athlete, category='error')

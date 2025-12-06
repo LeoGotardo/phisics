@@ -604,7 +604,6 @@ class Model:
             else:
                 athletes = baseQuery.all()
                 result = [athlete.dict() for athlete in athletes]
-                result = [str(athlete['sexo']).replace('0', 'Masculino').replace('1', 'Feminino') for athlete in result]
                 
             return True, result
             

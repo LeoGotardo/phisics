@@ -53,6 +53,7 @@ class Athlete(UserMixin, Config.db.Model):
             'nome': self.nome,
             'dataNascimento': self.dataNascimento,
             'sexo': self.sexo,
+            'sexo_display': 'Masculino' if self.sexo == 0 else 'Feminino',
             'altura': self.altura,
             'envergadura': self.envergadura,
             'arremesso': self.arremesso,
