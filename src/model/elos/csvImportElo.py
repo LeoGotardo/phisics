@@ -68,9 +68,9 @@ class CSVImportElo(Elo):
             
             missingColumns = []
             for column in self.COLUMNS:
-                columnName = column['name'].lower()
+                columnName = column.name.lower()
                 if columnName not in frameColumns:
-                    missingColumns.append(column['name'])
+                    missingColumns.append(column.name)
             
             if missingColumns:
                 raise ValueError(f"Colunas faltando no CSV: {', '.join(missingColumns)}")
@@ -97,8 +97,8 @@ class CSVImportElo(Elo):
         data = data.copy()
         
         for columnConfig in self.COLUMNS:
-            columnName = columnConfig['name'].lower()
-            columnType = columnConfig['type']
+            columnName = columnConfig.name.lower()
+            columnType = columnConfig.type
             
             if columnName not in data.columns:
                 continue

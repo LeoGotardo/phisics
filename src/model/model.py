@@ -57,6 +57,8 @@ class Model:
             # Processar CSV através da cadeia
             athletesList = elo.startElo(file)
             
+            ic(athletesList)
+            
             if not athletesList or len(athletesList) == 0:
                 return False, 'Nenhum atleta válido encontrado no CSV'
             
