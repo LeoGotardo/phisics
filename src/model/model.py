@@ -649,14 +649,16 @@ class Model:
             Tupla (status, mensagem)
         """
         try:
-            athlete = Athlete(**athleteData)
+            if isinstance(athleteData, dict):
+                athlete = Athlete(**athleteData)
+            else:
+                athlete = athleteData
 
             success, clusterResult = self.knnModel.predict(athleteData)
             
             if success != True:
                 return -1, clusterResult
             
-            # CORREÇÃO: Extrair o valor numérico do cluster
             if isinstance(clusterResult, dict):
                 clusterName = clusterResult['cluster']
                 # Mapear nome do cluster para ID numérico

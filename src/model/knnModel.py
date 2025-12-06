@@ -181,7 +181,7 @@ class KNNModel:
             
             # Se for apenas um atleta, retornar resultado simples
             if len(predictions) == 1:
-                clusterCode = int(predictions[0])  # CORREÇÃO: Garantir que é int
+                clusterCode = int(predictions[0])
                 clusterName = self.clusterMapping.get(clusterCode, 'Não classificado')
                 confidence = probabilities[0][clusterCode] * 100
                 
@@ -189,7 +189,7 @@ class KNNModel:
                 distances, indices = self.knn.kneighbors(xScaled, n_neighbors=self.nNeighbors)
                 
                 resultado = {
-                    'cluster': clusterCode,  # CORREÇÃO: Retornar ID numérico direto
+                    'cluster': clusterCode,
                     'cluster_name': clusterName,  # Nome para exibição
                     'confianca': f"{confidence:.1f}%",
                     'probabilidades': {
@@ -204,13 +204,13 @@ class KNNModel:
             # Se forem múltiplos atletas, retornar lista
             resultados = []
             for i, (pred, probs) in enumerate(zip(predictions, probabilities)):
-                clusterCode = int(pred)  # CORREÇÃO: Garantir int
+                clusterCode = int(pred)
                 clusterName = self.clusterMapping[clusterCode]
                 confidence = probs[clusterCode] * 100
                 
                 resultados.append({
                     'indice': i,
-                    'cluster': clusterCode,  # CORREÇÃO: ID numérico
+                    'cluster': clusterCode, 
                     'cluster_name': clusterName,
                     'confianca': f"{confidence:.1f}%"
                 })

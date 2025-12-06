@@ -5,6 +5,7 @@ from src.model.athleteModel import Athlete
 from src.utils.dataUtils import DataUtils
 from src.config import Config
 from io import BytesIO
+from icecream import ic
 
 
 class CSVImportElo(Elo):
@@ -42,6 +43,7 @@ class CSVImportElo(Elo):
         Returns:
             DataFrame com os dados do CSV
         """
+        
         
         if isinstance(csvFile, bytes):
             csvFile = BytesIO(csvFile)
@@ -92,6 +94,7 @@ class CSVImportElo(Elo):
             DataFrame com dados sanitizados e validados
         """
         
+
         data = data.copy()
         
         for columnConfig in self.COLUMNS:
@@ -103,16 +106,17 @@ class CSVImportElo(Elo):
             
             try:
                 if columnType == 'num':
-                    data[columnName] = DataUtils.validNum(data[columnName])   
+                    data = DataUtils.validNum(data, columnName)   
                 elif columnType == 'date':
-                    data[columnName] = DataUtils.validDate(data[columnName]) 
+                    data = DataUtils.validDate(data, columnName) 
                 elif columnType == 'sex':
-                    data[columnName] = DataUtils.validSex(data[columnName]) 
+                    data = DataUtils.validSex(data, columnName) 
                 elif columnType == 'string':
-                    data[columnName] = DataUtils.validString(data[columnName])  
+                    data = DataUtils.validStr(data, columnName)
                 else:
                     raise ValueError(f"Tipo de coluna desconhecido: {columnType}")    
             except Exception as e:
+                ic(e)
                 raise ValueError(f"Erro ao sanitizar coluna '{columnName}': {str(e)}")
         
         return data
@@ -128,7 +132,8 @@ class CSVImportElo(Elo):
         Returns:
             Lista de objetos Athlete
         """
-        
+        ic('ok3')
+        ic(data)
         athletes: list[Athlete] = []
         
         for index, row in data.iterrows():
