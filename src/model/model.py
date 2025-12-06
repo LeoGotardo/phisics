@@ -62,24 +62,10 @@ class Model:
             if not athletesList or len(athletesList) == 0:
                 return False, 'Nenhum atleta válido encontrado no CSV'
             
-            # Inserir atletas no banco
-            with Config.app.app_context():
-                for athlete in athletesList:
-                    self.session.add(athlete)
-                
-                self.session.commit()
-            
-            # Verificar se precisa treinar/retreinar o modelo KNN
-            total_athletes = self.session.query(Athlete).count()
-            
-            if total_athletes >= 20:
-                # Retreinar modelo com novos dados
-                train_status, train_msg = self.trainKNNModel(forceRetrain=True)
-                
-                if train_status:
-                    return True, f'{len(athletesList)} atletas importados e modelo retreinado com sucesso!'
-                else:
-                    return True, f'{len(athletesList)} atletas importados (aviso: {train_msg})'
+            for athlete in athletesList:
+                success, result = self.putAthlete(athlete)
+                if success != True:
+                    return success, result
             
             return True, f'{len(athletesList)} atletas importados com sucesso!'
             
