@@ -133,7 +133,6 @@ class Controller:
                 
             except Exception as e:
                 error_msg = f'{type(e).__name__}: {e}'
-                ic(e)
                 flash(f'Erro ao importar CSV: {error_msg}', category='error')
                 return redirect(url_for('renderCadastro'))
         else:
@@ -222,7 +221,6 @@ class Controller:
                 )
                 
                 if success == True:
-                    # CORREÇÃO: Adicionar ageRange original aos filtros
                     athletes['filters']['ageRange'] = ageRange
                     return render_template('analise.html', athletes=athletes)
                 else:
@@ -318,10 +316,12 @@ class Controller:
         match request.method:
             case 'GET':
                 success, athlete = self.model.getAthleteById(athlete_id)
+                ic(athlete)
                 
                 if success == True:
                     athlete_data = athlete.dict()
                     athlete_data['dataNascimento'] = athlete.dataNascimento.strftime('%Y-%m-%d')
+                    athlete_data['sexo'] = str(athlete_data['sexo']).replace('0', 'Masculino').replace('1', 'Feminino')
                     return render_template('editAthlete.html', athlete=athlete_data)
                 elif success == False:
                     flash(athlete, category='error')

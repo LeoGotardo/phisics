@@ -5,6 +5,7 @@ from sklearn.model_selection import cross_val_score
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.preprocessing import StandardScaler
 from typing import Tuple, List, Dict
+from icecream import ic
 
 
 class KNNModel:
@@ -53,7 +54,7 @@ class KNNModel:
         
         # Codificar sexo (M=1, F=0)
         if 'sexo' in dfFeatures.columns:
-            dfFeatures['sexo'] = dfFeatures['sexo'].map({'M': 1, 'F': 0})
+            dfFeatures['sexo'] = dfFeatures['sexo'].map({'M': 1, 'F': 0, 0:0, 1:1})
         
         # Selecionar apenas as features necessárias
         X = dfFeatures[self.featureNames].values

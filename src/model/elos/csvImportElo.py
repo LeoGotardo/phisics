@@ -116,7 +116,6 @@ class CSVImportElo(Elo):
                 else:
                     raise ValueError(f"Tipo de coluna desconhecido: {columnType}")    
             except Exception as e:
-                ic(e)
                 raise ValueError(f"Erro ao sanitizar coluna '{columnName}': {str(e)}")
         
         return data
@@ -132,8 +131,6 @@ class CSVImportElo(Elo):
         Returns:
             Lista de objetos Athlete
         """
-        ic('ok3')
-        ic(data)
         athletes: list[Athlete] = []
         
         for index, row in data.iterrows():

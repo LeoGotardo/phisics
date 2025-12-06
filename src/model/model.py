@@ -57,8 +57,6 @@ class Model:
             # Processar CSV através da cadeia
             athletesList = elo.startElo(file)
             
-            ic(athletesList)
-            
             if not athletesList or len(athletesList) == 0:
                 return False, 'Nenhum atleta válido encontrado no CSV'
             
@@ -606,6 +604,7 @@ class Model:
             else:
                 athletes = baseQuery.all()
                 result = [athlete.dict() for athlete in athletes]
+                result = [str(athlete['sexo']).replace('0', 'Masculino').replace('1', 'Feminino') for athlete in result]
                 
             return True, result
             
@@ -654,13 +653,15 @@ class Model:
             else:
                 athlete = athleteData
 
-            success, clusterResult = self.knnModel.predict(athleteData)
+            predictData = athlete.dict()
+            success, clusterResult = self.knnModel.predict(predictData)
+            ic(clusterResult)
             
             if success != True:
                 return -1, clusterResult
             
             if isinstance(clusterResult, dict):
-                clusterName = clusterResult['cluster']
+                clusterName = clusterResult['cluster_name']
                 # Mapear nome do cluster para ID numérico
                 clusterMapping = {
                     'Iniciante': 0,
@@ -841,7 +842,7 @@ class Model:
                 if 'saltoHorizontal' in athleteData:
                     athlete.saltoHorizontal = float(athleteData['saltoHorizontal'])
                 if 'abdominais' in athleteData:
-                    athlete.abdominais = int(athleteData['abdominais'])
+                    athlete.abdominais = float(athleteData['abdominais'])
                 
                 # Reclassificar com KNN se alguma métrica mudou
                 if any(k in athleteData for k in ['altura', 'envergadura', 'arremesso', 'saltoHorizontal', 'abdominais', 'sexo']):
